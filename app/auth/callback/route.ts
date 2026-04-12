@@ -3,10 +3,22 @@ import { cookies } from "next/headers"
 import { NextResponse } from "next/server"
 import { getSupabaseConfig } from "@/lib/env"
 
+const sanitizeNextPath = (value: string | null) => {
+  if (!value) return "/dashboard"
+  if (!value.startsWith("/") || value.startsWith("//")) return "/dashboard"
+  if (value.includes(":") || value.includes("\n") || value.includes("\r")) return "/dashboard"
+  return value
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
+  const errParam = searchParams.get("error_description") ?? searchParams.get("error")
+  if (errParam && !searchParams.get("code")) {
+    const safe = encodeURIComponent(errParam.slice(0, 400))
+    return NextResponse.redirect(`${origin}/login?error=${safe}`)
+  }
   const code = searchParams.get("code")
-  const next = searchParams.get("next") ?? "/dashboard"
+  const next = sanitizeNextPath(searchParams.get("next"))
   const { url, key } = getSupabaseConfig()
 
   if (code) {

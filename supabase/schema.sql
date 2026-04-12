@@ -1,5 +1,13 @@
 -- Ejecutar en Supabase SQL Editor si aún no tenés estas tablas.
 -- Ajustá nombres si tu esquema ya existe con otra convención.
+--
+-- Auth (Google): en el dashboard de Supabase → Authentication → Providers,
+-- habilitá Google, cargá Client ID / Secret de Google Cloud Console, y en
+-- URL Configuration agregá la URL de callback:
+--   https://<tu-proyecto>.supabase.co/auth/v1/callback
+-- En "Redirect URLs" de la app incluí:
+--   http://localhost:3000/auth/callback
+--   https://<tu-dominio-producción>/auth/callback
 
 create table if not exists public.categories (
   id uuid primary key default gen_random_uuid(),

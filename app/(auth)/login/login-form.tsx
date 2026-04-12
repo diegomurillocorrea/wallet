@@ -1,11 +1,13 @@
 "use client"
 
 import { Suspense, useState } from "react"
+import { motion } from "framer-motion"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { useTheme } from "@/hooks/use-theme"
 import { Footer } from "@/components/footer"
 import { DaiegoLogo } from "@/components/daiego-logo"
+import { GoogleAuthButton } from "@/components/google-auth-button"
 
 function safeDecodeURIComponent(value: string) {
   try {
@@ -28,6 +30,9 @@ export function LoginForm() {
   const isRecovery = searchParams.get("type") === "recovery"
   const urlError = searchParams.get("error")
   const displayError = error ?? (urlError ? safeDecodeURIComponent(urlError) : null)
+  const nextParam = searchParams.get("next")
+  const oauthNext =
+    nextParam && nextParam.startsWith("/") && !nextParam.startsWith("//") ? nextParam : "/dashboard"
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -62,8 +67,16 @@ export function LoginForm() {
   const { theme, toggleTheme } = useTheme()
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-zinc-100 dark:bg-zinc-950">
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-8">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-90 dark:opacity-70"
+        aria-hidden
+      >
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-emerald-400/25 blur-3xl dark:bg-emerald-500/20" />
+        <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-500/15" />
+        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-amber-300/15 blur-3xl dark:bg-amber-400/10" />
+      </div>
+      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8">
         <button
           type="button"
           onClick={toggleTheme}
@@ -91,7 +104,12 @@ export function LoginForm() {
             </svg>
           )}
         </button>
-        <main className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-lg dark:border-zinc-800 dark:bg-zinc-900 dark:shadow-xl sm:p-10">
+        <motion.main
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+          className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 dark:shadow-xl sm:p-10"
+        >
           <div className="mb-8 text-center">
             <div className="mb-2 flex items-center justify-center gap-3" role="group" aria-label="DAIEGO Wallet">
               <DaiegoLogo
@@ -104,10 +122,27 @@ export function LoginForm() {
                 Wallet
               </h1>
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">Inicia sesión en tu cuenta</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+              Entrá con Google o con tu correo y contraseña
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-4">
+            <GoogleAuthButton
+              nextPath={oauthNext}
+              disabled={isLoading}
+              onError={(message) => setError(message)}
+            />
+            <div className="flex items-center gap-3" role="separator" aria-label="O continuar con correo">
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+                o correo
+              </span>
+              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
             <div>
               <label
                 htmlFor="email"
@@ -197,7 +232,7 @@ export function LoginForm() {
               {isLoading ? "Iniciando sesión…" : "Iniciar sesión"}
             </button>
           </form>
-        </main>
+        </motion.main>
       </div>
       <Footer />
     </div>
