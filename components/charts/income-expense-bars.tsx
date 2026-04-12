@@ -1,14 +1,7 @@
 "use client"
 
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts"
+import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts"
+import { useChartContainerSize } from "@/hooks/use-chart-container-size"
 
 interface IncomeExpenseBarsProps {
   income: number
@@ -16,18 +9,24 @@ interface IncomeExpenseBarsProps {
 }
 
 export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) => {
+  const { ref, width, height } = useChartContainerSize()
   const data = [
     { name: "Ingresos", value: income, fill: "#059669" },
     { name: "Gastos", value: expense, fill: "#f97316" },
   ]
 
   return (
-    <div className="h-56 w-full sm:h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={data} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" className="stroke-slate-200 dark:stroke-slate-700" />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-slate-600 dark:fill-slate-400" />
-          <YAxis tick={{ fontSize: 11 }} className="fill-slate-600 dark:fill-slate-400" />
+    <div ref={ref} className="h-56 w-full min-w-0 sm:h-64">
+      {width > 0 && height > 0 ? (
+        <BarChart
+          width={width}
+          height={height}
+          data={data}
+          margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
+        >
+          <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-700" />
+          <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-zinc-600 dark:fill-zinc-400" />
+          <YAxis tick={{ fontSize: 11 }} className="fill-zinc-600 dark:fill-zinc-400" />
           <Tooltip
             formatter={(v) =>
               new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(
@@ -42,7 +41,7 @@ export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) =
           />
           <Bar dataKey="value" radius={[8, 8, 0, 0]} name="Monto" />
         </BarChart>
-      </ResponsiveContainer>
+      ) : null}
     </div>
   )
 }

@@ -1,76 +1,33 @@
 "use client"
 
 import { Moon, Sun } from "lucide-react"
-import { useEffect, useState } from "react"
+import { useTheme } from "@/hooks/use-theme"
 
-export const ThemeToggle = () => {
-  const [mounted, setMounted] = useState(false)
-  const [isDark, setIsDark] = useState(false)
+type ThemeToggleProps = {
+  className?: string
+}
 
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      setMounted(true)
-      const root = document.documentElement
-      const stored = localStorage.getItem("theme")
-      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
-      root.classList.remove("light", "dark")
-      if (stored === "dark") {
-        root.classList.add("dark")
-        setIsDark(true)
-        return
-      }
-      if (stored === "light") {
-        root.classList.add("light")
-        setIsDark(false)
-        return
-      }
-      if (prefersDark) {
-        root.classList.add("dark")
-        setIsDark(true)
-        return
-      }
-      setIsDark(false)
-    })
-    return () => cancelAnimationFrame(id)
-  }, [])
-
-  const handleClick = () => {
-    const root = document.documentElement
-    if (isDark) {
-      root.classList.remove("dark")
-      root.classList.add("light")
-      setIsDark(false)
-      localStorage.setItem("theme", "light")
-      return
-    }
-    root.classList.remove("light")
-    root.classList.add("dark")
-    setIsDark(true)
-    localStorage.setItem("theme", "dark")
-  }
+export const ThemeToggle = ({ className }: ThemeToggleProps) => {
+  const { theme, toggleTheme } = useTheme()
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" || e.key === " ") {
       e.preventDefault()
-      handleClick()
+      toggleTheme()
     }
   }
 
-  if (!mounted) {
-    return (
-      <span
-        className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white opacity-0 dark:border-slate-700 dark:bg-slate-900"
-        aria-hidden
-      />
-    )
-  }
+  const isDark = theme === "dark"
+
+  const baseBtn =
+    "inline-flex size-11 items-center justify-center rounded-xl border border-zinc-200 bg-white text-zinc-700 transition-colors hover:bg-zinc-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 focus:ring-offset-white dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-950"
 
   return (
     <button
       type="button"
-      onClick={handleClick}
+      onClick={toggleTheme}
       onKeyDown={handleKeyDown}
-      className="inline-flex size-11 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+      className={`${baseBtn}${className ? ` ${className}` : ""}`}
       aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
     >
       {isDark ? <Sun className="size-5" aria-hidden /> : <Moon className="size-5" aria-hidden />}

@@ -19,23 +19,23 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+      className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
     >
-      <h2 className="text-base font-semibold text-slate-900 dark:text-slate-100">
+      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
         Definir o actualizar presupuesto
       </h2>
-      <p className="text-sm text-slate-500 dark:text-slate-400">
+      <p className="text-sm text-zinc-500 dark:text-zinc-400">
         Límite mensual por categoría de gasto. Si ya existe para el mes, se actualiza.
       </p>
       <div>
-        <label htmlFor="budget-cat" className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+        <label htmlFor="budget-cat" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Categoría
         </label>
         <select
           id="budget-cat"
           name="categoryId"
           required
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
           <option value="">Elegí categoría de gasto</option>
           {expenseCategories.map((c) => (
@@ -46,7 +46,7 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
         </select>
       </div>
       <div>
-        <label htmlFor="budget-limit" className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+        <label htmlFor="budget-limit" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Límite (USD)
         </label>
         <input
@@ -57,11 +57,11 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
           min="0"
           step="0.01"
           required
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>
       <div>
-        <label htmlFor="budget-month" className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+        <label htmlFor="budget-month" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Mes (primer día)
         </label>
         <input
@@ -69,7 +69,7 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
           name="monthStart"
           type="date"
           defaultValue={defaultMonth}
-          className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm dark:border-slate-700 dark:bg-slate-950"
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>
       {state?.error ? (

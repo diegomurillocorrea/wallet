@@ -122,10 +122,10 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
           Resumen
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           {monthLabel(monthStart)} · balance y movimientos del mes
         </p>
       </header>
@@ -134,8 +134,8 @@ export default async function DashboardPage() {
         <TransactionQuickForm categories={categories} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <MotionStatCard className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:col-span-2 lg:col-span-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2 lg:col-span-1">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Balance total
             </p>
             <p
@@ -144,16 +144,16 @@ export default async function DashboardPage() {
               {formatMoney(balance)}
             </p>
           </MotionStatCard>
-          <MotionStatCard className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Ingresos del mes
             </p>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
               {formatMoney(monthIncome)}
             </p>
           </MotionStatCard>
-          <MotionStatCard className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-            <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
+            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
               Gastos del mes
             </p>
             <p className="mt-2 text-2xl font-semibold tabular-nums text-orange-600 dark:text-orange-400">
@@ -165,12 +165,12 @@ export default async function DashboardPage() {
 
       {alerts.length > 0 ? (
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="budget-alerts-heading"
         >
           <h2
             id="budget-alerts-heading"
-            className="text-base font-semibold text-slate-900 dark:text-slate-100"
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
           >
             Presupuestos del mes
           </h2>
@@ -179,22 +179,22 @@ export default async function DashboardPage() {
               <li key={a.budgetId}>
                 <div className="flex items-center gap-3">
                   <span
-                    className="flex size-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                    className="flex size-10 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
                     style={{ color: a.color }}
                   >
                     <CategoryIcon name={a.icon} className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                      <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {a.categoryName}
                       </span>
-                      <span className="shrink-0 text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                      <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                         {formatMoney(a.spent)} / {formatMoney(a.limit)}
                       </span>
                     </div>
                     <div
-                      className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                      className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       role="progressbar"
                       aria-valuenow={Math.min(100, Math.round(a.ratio * 100))}
                       aria-valuemin={0}
@@ -232,24 +232,24 @@ export default async function DashboardPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="chart-bars-heading"
         >
           <h2
             id="chart-bars-heading"
-            className="text-base font-semibold text-slate-900 dark:text-slate-100"
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
           >
             Ingresos vs gastos
           </h2>
           <IncomeExpenseBars income={monthIncome} expense={monthExpense} />
         </section>
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="chart-pie-heading"
         >
           <h2
             id="chart-pie-heading"
-            className="text-base font-semibold text-slate-900 dark:text-slate-100"
+            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
           >
             Gastos por categoría
           </h2>
@@ -258,21 +258,21 @@ export default async function DashboardPage() {
       </div>
 
       <section
-        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
         aria-labelledby="recent-heading"
       >
         <h2
           id="recent-heading"
-          className="text-base font-semibold text-slate-900 dark:text-slate-100"
+          className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
         >
           Últimos movimientos
         </h2>
         {recent.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
             Todavía no hay movimientos. Registrá un gasto o ingreso arriba.
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
             {recent.map((t) => {
               const cat = t.category
               const isIncome = t.kind === "income"
@@ -283,19 +283,19 @@ export default async function DashboardPage() {
                 >
                   {cat ? (
                     <span
-                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
                       style={{ color: cat.color }}
                     >
                       <CategoryIcon name={cat.icon} className="size-5" />
                     </span>
                   ) : (
-                    <span className="size-10 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800" />
+                    <span className="size-10 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {cat?.name ?? "Sin categoría"}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       {t.occurred_at}
                       {t.note ? ` · ${t.note}` : ""}
                     </p>

@@ -1,6 +1,7 @@
 "use client"
 
-import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts"
+import { Cell, Pie, PieChart, Tooltip } from "recharts"
+import { useChartContainerSize } from "@/hooks/use-chart-container-size"
 
 interface Slice {
   name: string
@@ -13,26 +14,28 @@ interface ExpenseByCategoryChartProps {
 }
 
 export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) => {
+  const { ref, width, height } = useChartContainerSize()
+
   if (!data.length) {
     return (
-      <p className="flex h-56 items-center justify-center text-center text-sm text-slate-500 dark:text-slate-400">
+      <p className="flex h-56 items-center justify-center text-center text-sm text-zinc-500 dark:text-zinc-400">
         Registrá gastos este mes para ver el desglose por categoría.
       </p>
     )
   }
 
   return (
-    <div className="h-56 w-full sm:h-64">
-      <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
+    <div ref={ref} className="h-56 w-full min-w-0 sm:h-64">
+      {width > 0 && height > 0 ? (
+        <PieChart width={width} height={height}>
           <Pie
             data={data}
             dataKey="value"
             nameKey="name"
             cx="50%"
             cy="50%"
-            innerRadius={48}
-            outerRadius={80}
+            innerRadius="30%"
+            outerRadius="48%"
             paddingAngle={2}
           >
             {data.map((entry) => (
@@ -52,7 +55,7 @@ export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) =>
             }}
           />
         </PieChart>
-      </ResponsiveContainer>
+      ) : null}
     </div>
   )
 }

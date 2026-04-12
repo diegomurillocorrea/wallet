@@ -29,10 +29,10 @@ export default async function BudgetsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
           Presupuestos
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Límites por categoría · {monthLabel(monthStart)}
         </p>
       </header>
@@ -41,14 +41,14 @@ export default async function BudgetsPage() {
         <BudgetForm expenseCategories={expenseCategories} />
 
         <section
-          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="budget-list-heading"
         >
-          <h2 id="budget-list-heading" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+          <h2 id="budget-list-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
             Estado del mes
           </h2>
           {budgets.length === 0 ? (
-            <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
               Todavía no definiste presupuestos para este mes. Usá el formulario para agregar uno.
             </p>
           ) : (
@@ -56,23 +56,23 @@ export default async function BudgetsPage() {
               {budgets.map((b) => (
                 <li key={b.budgetId} className="flex items-start gap-3">
                   <span
-                    className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                    className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
                     style={{ color: b.color }}
                   >
                     <CategoryIcon name={b.icon} className="size-5" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                      <span className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {b.categoryName}
                       </span>
                       <DeleteBudgetButton id={b.budgetId} />
                     </div>
-                    <p className="mt-0.5 text-xs tabular-nums text-slate-500 dark:text-slate-400">
+                    <p className="mt-0.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                       {formatMoney(b.spent)} de {formatMoney(b.limit)}
                     </p>
                     <div
-                      className="mt-2 h-2 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800"
+                      className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       role="progressbar"
                       aria-valuenow={Math.min(100, Math.round(b.ratio * 100))}
                       aria-valuemin={0}

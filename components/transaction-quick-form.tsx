@@ -25,18 +25,18 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
 
   return (
     <section
-      className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+      className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
       aria-labelledby="quick-add-heading"
     >
-      <h2 id="quick-add-heading" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+      <h2 id="quick-add-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
         Registrar movimiento
       </h2>
-      <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
         Gasto o ingreso en pocos segundos.
       </p>
 
       <div
-        className="mt-4 flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800"
+        className="mt-4 flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800"
         role="tablist"
         aria-label="Tipo de movimiento"
       >
@@ -54,8 +54,8 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             onClick={() => setKind(k)}
             className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 ${
               kind === k
-                ? "bg-white text-emerald-800 shadow-sm dark:bg-slate-950 dark:text-emerald-300"
-                : "text-slate-600 dark:text-slate-400"
+                ? "bg-white text-emerald-800 shadow-sm dark:bg-zinc-950 dark:text-emerald-300"
+                : "text-zinc-600 dark:text-zinc-400"
             }`}
           >
             {label}
@@ -74,7 +74,7 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             id="categoryId"
             name="categoryId"
             required
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           >
             <option value="">Elegí categoría</option>
             {filtered.map((c) => (
@@ -98,7 +98,7 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             step="0.01"
             required
             placeholder="Monto"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
         </div>
 
@@ -112,12 +112,12 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             type="text"
             maxLength={500}
             placeholder="Nota (opcional)"
-            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
         </div>
 
         <div>
-          <label htmlFor="occurredAt" className="block text-xs font-medium text-slate-500 dark:text-slate-400">
+          <label htmlFor="occurredAt" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
             Fecha
           </label>
           <input
@@ -125,7 +125,7 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             name="occurredAt"
             type="date"
             defaultValue={today}
-            className="mt-1 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
         </div>
 

@@ -54,10 +54,10 @@ export default async function TransactionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
+        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
           Movimientos
         </h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
           Historial y registro rápido.
         </p>
       </header>
@@ -65,18 +65,18 @@ export default async function TransactionsPage() {
       <TransactionQuickForm categories={categories} />
 
       <section
-        className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-6"
+        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
         aria-labelledby="tx-list-heading"
       >
-        <h2 id="tx-list-heading" className="text-base font-semibold text-slate-900 dark:text-slate-100">
+        <h2 id="tx-list-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
           Historial
         </h2>
         {rows.length === 0 ? (
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
             No hay movimientos todavía.
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
+          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
             {rows.map((t) => {
               const cat = t.category
               const isIncome = t.kind === "income"
@@ -84,19 +84,19 @@ export default async function TransactionsPage() {
                 <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                   {cat ? (
                     <span
-                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
                       style={{ color: cat.color }}
                     >
                       <CategoryIcon name={cat.icon} className="size-5" />
                     </span>
                   ) : (
-                    <span className="size-10 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800" />
+                    <span className="size-10 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                       {cat?.name ?? "Sin categoría"}
                     </p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
                       {t.occurred_at}
                       {t.note ? ` · ${t.note}` : ""}
                     </p>
