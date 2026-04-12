@@ -1,17 +1,21 @@
 "use client"
 
-import { useActionState, useState } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { addCategory, type ActionResult } from "@/app/(app)/actions/wallet-actions"
-import { CATEGORY_ICON_OPTIONS, CategoryIcon } from "@/components/category-icon"
+import { CategoryIconPicker } from "@/components/category-icon-picker"
 import type { TransactionKind } from "@/lib/types/wallet"
 
 export const AddCategoryForm = () => {
   const [kind, setKind] = useState<TransactionKind>("expense")
-  const [icon, setIcon] = useState<string>("Circle")
+  const [iconPickerKey, setIconPickerKey] = useState(0)
   const [state, formAction, pending] = useActionState(
     async (_: ActionResult | undefined, fd: FormData) => addCategory(fd),
     undefined as ActionResult | undefined
   )
+
+  useEffect(() => {
+    if (state?.success) setIconPickerKey((k) => k + 1)
+  }, [state?.success])
 
   return (
     <form
@@ -50,11 +54,11 @@ export const AddCategoryForm = () => {
         ))}
       </div>
       <div>
-        <label htmlFor="cat-name" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label htmlFor="add-cat-name" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Nombre
         </label>
         <input
-          id="cat-name"
+          id="add-cat-name"
           name="name"
           required
           maxLength={80}
@@ -62,11 +66,11 @@ export const AddCategoryForm = () => {
         />
       </div>
       <div>
-        <label htmlFor="cat-color" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label htmlFor="add-cat-color" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
           Color
         </label>
         <input
-          id="cat-color"
+          id="add-cat-color"
           name="color"
           type="color"
           defaultValue="#6366f1"
@@ -74,25 +78,9 @@ export const AddCategoryForm = () => {
         />
       </div>
       <div>
-        <label htmlFor="cat-icon" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Ícono
-        </label>
-        <select
-          id="cat-icon"
-          name="icon"
-          value={icon}
-          onChange={(e) => setIcon(e.target.value)}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          {CATEGORY_ICON_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-        <div className="mt-2 flex items-center gap-2 text-sm text-zinc-500 dark:text-zinc-400">
-          <span>Vista previa:</span>
-          <CategoryIcon name={icon} className="size-6 text-zinc-800 dark:text-zinc-200" />
+        <span className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">Ícono</span>
+        <div className="mt-2">
+          <CategoryIconPicker key={iconPickerKey} idPrefix="add-cat-icon" defaultIcon="circle" />
         </div>
       </div>
       {state?.error ? (

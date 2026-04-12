@@ -7,6 +7,7 @@ export interface CategoryRow {
   kind: TransactionKind
   color: string
   icon: string
+  /** Legado en BD; la app trata todas las categorías por igual */
   is_system: boolean
   created_at: string
 }

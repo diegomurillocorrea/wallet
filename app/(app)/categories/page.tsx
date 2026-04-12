@@ -1,6 +1,7 @@
 import { AddCategoryForm } from "@/components/add-category-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteCategoryButton } from "@/components/delete-category-button"
+import { EditCategoryDialog } from "@/components/edit-category-dialog"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
 
@@ -27,7 +28,8 @@ export default async function CategoriesPage() {
           Categorías
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Predefinidas al crear tu cuenta; podés agregar las tuyas.
+          Predefinidas al crear tu cuenta; podés agregar, editar o eliminar cualquiera. Los íconos son de Lucide:
+          buscá por nombre o escribí la clave exacta.
         </p>
       </header>
 
@@ -59,10 +61,12 @@ export default async function CategoriesPage() {
                   </p>
                   <p className="text-xs text-zinc-500 dark:text-zinc-400">
                     {c.kind === "income" ? "Ingreso" : "Gasto"}
-                    {c.is_system ? " · Sistema" : ""}
                   </p>
                 </div>
-                <DeleteCategoryButton id={c.id} isSystem={c.is_system} />
+                <div className="flex shrink-0 items-center gap-1">
+                  <EditCategoryDialog category={c} />
+                  <DeleteCategoryButton id={c.id} />
+                </div>
               </li>
             ))}
           </ul>

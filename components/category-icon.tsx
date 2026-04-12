@@ -1,36 +1,8 @@
 "use client"
 
-import {
-  Banknote,
-  Car,
-  Circle,
-  Gamepad2,
-  GraduationCap,
-  HeartPulse,
-  Home,
-  Laptop,
-  MoreHorizontal,
-  TrendingUp,
-  UtensilsCrossed,
-  Wallet,
-  type LucideIcon,
-} from "lucide-react"
-
-const MAP: Record<string, LucideIcon> = {
-  UtensilsCrossed,
-  Utensils: UtensilsCrossed,
-  Car,
-  Home,
-  Gamepad2,
-  HeartPulse,
-  GraduationCap,
-  MoreHorizontal,
-  Banknote,
-  Laptop,
-  TrendingUp,
-  Wallet,
-  Circle,
-}
+import { Circle } from "lucide-react"
+import { DynamicIcon, type IconName } from "lucide-react/dynamic"
+import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
 
 interface CategoryIconProps {
   name: string
@@ -38,21 +10,17 @@ interface CategoryIconProps {
 }
 
 export const CategoryIcon = ({ name, className }: CategoryIconProps) => {
-  const Icon = MAP[name] ?? Circle
-  return <Icon className={className} aria-hidden />
-}
+  const key = resolveCategoryIconKey(name)
+  if (!key) {
+    return <Circle className={className} aria-hidden />
+  }
 
-export const CATEGORY_ICON_OPTIONS = [
-  "UtensilsCrossed",
-  "Car",
-  "Home",
-  "Gamepad2",
-  "HeartPulse",
-  "GraduationCap",
-  "MoreHorizontal",
-  "Banknote",
-  "Laptop",
-  "TrendingUp",
-  "Wallet",
-  "Circle",
-] as const
+  return (
+    <DynamicIcon
+      name={key as IconName}
+      className={className}
+      aria-hidden
+      fallback={() => <Circle className={className} aria-hidden />}
+    />
+  )
+}

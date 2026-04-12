@@ -5,6 +5,7 @@ import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
 import { currentMonthRange, normalizeMonthStartInput } from "@/lib/dates/month"
+import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
 
 export async function ensureDefaultCategories() {
   const supabase = await createClient()
@@ -12,6 +13,9 @@ export async function ensureDefaultCategories() {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return
+
+  await supabase.from("categories").update({ is_system: false }).eq("user_id", user.id).eq("is_system", true)
+
   const { count, error: countError } = await supabase
     .from("categories")
     .select("id", { count: "exact", head: true })
@@ -24,7 +28,7 @@ export async function ensureDefaultCategories() {
     color: c.color,
     icon: c.icon,
     user_id: user.id,
-    is_system: true,
+    is_system: false,
   }))
   await supabase.from("categories").insert(rows)
 }
@@ -115,7 +119,7 @@ const categorySchema = z.object({
   name: z.string().min(1, "Nombre requerido").max(80),
   kind: z.enum(["expense", "income"]),
   color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color inválido"),
-  icon: z.string().min(1).max(40),
+  icon: z.string().min(1).max(96),
 })
 
 export async function addCategory(formData: FormData): Promise<ActionResult> {
@@ -136,12 +140,20 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
     return { error: msg ?? "Datos inválidos" }
   }
 
+  const iconKey = resolveCategoryIconKey(parsed.data.icon)
+  if (!iconKey) {
+    return {
+      error:
+        "Ícono no válido. Usá un nombre de Lucide (https://lucide.dev/icons/), en inglés y con guiones o en PascalCase.",
+    }
+  }
+
   const { error } = await supabase.from("categories").insert({
     user_id: user.id,
     name: parsed.data.name.trim(),
     kind: parsed.data.kind,
     color: parsed.data.color,
-    icon: parsed.data.icon,
+    icon: iconKey,
     is_system: false,
   })
 
@@ -160,15 +172,9 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   } = await supabase.auth.getUser()
   if (!user) return { error: "No autenticado" }
 
-  const { data: row } = await supabase
-    .from("categories")
-    .select("is_system")
-    .eq("id", id)
-    .eq("user_id", user.id)
-    .single()
+  const { data: row } = await supabase.from("categories").select("id").eq("id", id).eq("user_id", user.id).single()
 
   if (!row) return { error: "Categoría no encontrada" }
-  if (row.is_system) return { error: "No podés eliminar categorías del sistema" }
 
   const { error } = await supabase
     .from("categories")
@@ -182,6 +188,69 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
     }
     return { error: error.message }
   }
+  revalidatePath("/categories")
+  revalidatePath("/transactions")
+  revalidatePath("/dashboard")
+  revalidatePath("/budgets")
+  return { success: true }
+}
+
+const updateCategorySchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "Nombre requerido").max(80),
+  kind: z.enum(["expense", "income"]),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, "Color inválido"),
+  icon: z.string().min(1).max(96),
+})
+
+export async function updateCategory(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "No autenticado" }
+
+  const parsed = updateCategorySchema.safeParse({
+    id: formData.get("id"),
+    name: formData.get("name"),
+    kind: formData.get("kind"),
+    color: formData.get("color"),
+    icon: formData.get("icon"),
+  })
+  if (!parsed.success) {
+    const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
+    return { error: msg ?? "Datos inválidos" }
+  }
+
+  const { data: existing } = await supabase
+    .from("categories")
+    .select("id")
+    .eq("id", parsed.data.id)
+    .eq("user_id", user.id)
+    .single()
+
+  if (!existing) return { error: "Categoría no encontrada" }
+
+  const iconKey = resolveCategoryIconKey(parsed.data.icon)
+  if (!iconKey) {
+    return {
+      error:
+        "Ícono no válido. Usá un nombre de Lucide (https://lucide.dev/icons/), en inglés y con guiones o en PascalCase.",
+    }
+  }
+
+  const { error } = await supabase
+    .from("categories")
+    .update({
+      name: parsed.data.name.trim(),
+      kind: parsed.data.kind,
+      color: parsed.data.color,
+      icon: iconKey,
+    })
+    .eq("id", parsed.data.id)
+    .eq("user_id", user.id)
+
+  if (error) return { error: error.message }
   revalidatePath("/categories")
   revalidatePath("/transactions")
   revalidatePath("/dashboard")

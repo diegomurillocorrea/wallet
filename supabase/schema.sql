@@ -8,6 +8,7 @@ create table if not exists public.categories (
   kind text not null check (kind in ('expense', 'income')),
   color text not null default '#6366f1',
   icon text not null default 'Circle',
+  -- reservado; la app ya no distingue categorías de sistema (siempre false)
   is_system boolean not null default false,
   created_at timestamptz not null default now()
 );

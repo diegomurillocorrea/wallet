@@ -6,13 +6,10 @@ import { deleteCategory } from "@/app/(app)/actions/wallet-actions"
 
 interface DeleteCategoryButtonProps {
   id: string
-  isSystem: boolean
 }
 
-export const DeleteCategoryButton = ({ id, isSystem }: DeleteCategoryButtonProps) => {
+export const DeleteCategoryButton = ({ id }: DeleteCategoryButtonProps) => {
   const [pending, startTransition] = useTransition()
-
-  if (isSystem) return null
 
   const handleClick = () => {
     startTransition(async () => {
