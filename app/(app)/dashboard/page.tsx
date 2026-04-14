@@ -2,6 +2,7 @@ import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { ExpenseByCategoryChart } from "@/components/charts/expense-by-category-chart"
 import { IncomeExpenseBars } from "@/components/charts/income-expense-bars"
 import { CategoryIcon } from "@/components/category-icon"
+import { EditBudgetDialog } from "@/components/edit-budget-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { MotionStatCard } from "@/components/motion-stat-card"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
@@ -118,6 +119,7 @@ export default async function DashboardPage() {
   const recent = (recentData ?? []) as unknown as RecentRow[]
 
   const alerts = await getBudgetAlertsForUser()
+  const expenseCategories = categories.filter((c) => c.kind === "expense")
 
   return (
     <div className="flex flex-col gap-8">
@@ -189,10 +191,26 @@ export default async function DashboardPage() {
                       <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                         {a.categoryName}
                       </span>
-                      <span className="shrink-0 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-                        {formatMoney(a.spent)} / {formatMoney(a.limit)}
-                      </span>
+                      <div className="flex shrink-0 items-center gap-0.5">
+                        <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+                          {formatMoney(a.spent)} / {formatMoney(a.limit)}
+                        </span>
+                        <EditBudgetDialog
+                          expenseCategories={expenseCategories}
+                          budget={{
+                            budgetId: a.budgetId,
+                            categoryId: a.categoryId,
+                            categoryName: a.categoryName,
+                            limit: a.limit,
+                            monthStart: a.monthStart,
+                            paymentDay: a.paymentDay,
+                          }}
+                        />
+                      </div>
                     </div>
+                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
+                      Pago día <span className="tabular-nums">{a.paymentDay}</span>
+                    </p>
                     <div
                       className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       role="progressbar"

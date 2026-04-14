@@ -43,6 +43,7 @@ create table if not exists public.budgets (
   category_id uuid not null references public.categories (id) on delete cascade,
   amount_limit numeric(14, 2) not null check (amount_limit > 0),
   month_start date not null,
+  payment_day smallint not null default 1 check (payment_day >= 1 and payment_day <= 31),
   unique (user_id, category_id, month_start)
 );
 

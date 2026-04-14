@@ -1,43 +1,97 @@
 "use client"
 
-import { useActionState, useMemo } from "react"
-import { upsertBudget, type ActionResult } from "@/app/(app)/actions/wallet-actions"
-import { monthStartIso } from "@/lib/dates/month"
-import type { CategoryRow } from "@/lib/types/wallet"
+import { useActionState, useEffect, useId, useMemo } from "react"
+import {
+  updateBudget,
+  upsertBudget,
+  type ActionResult,
+} from "@/app/(app)/actions/wallet-actions"
+import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
+import type { BudgetEditTarget, CategoryRow } from "@/lib/types/wallet"
+
+const saveBudget = async (
+  _: ActionResult | undefined,
+  fd: FormData
+): Promise<ActionResult> => {
+  const raw = fd.get("budgetId")
+  if (raw != null && String(raw).trim() !== "") return updateBudget(fd)
+  return upsertBudget(fd)
+}
 
 interface BudgetFormProps {
   expenseCategories: CategoryRow[]
+  editTarget?: BudgetEditTarget | null
+  onCancelEdit?: () => void
 }
 
-export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
-  const defaultMonth = useMemo(() => monthStartIso(new Date()), [])
-  const [state, formAction, pending] = useActionState(
-    async (_: ActionResult | undefined, fd: FormData) => upsertBudget(fd),
-    undefined as ActionResult | undefined
-  )
+export const BudgetForm = ({
+  expenseCategories,
+  editTarget = null,
+  onCancelEdit,
+}: BudgetFormProps) => {
+  const isEdit = editTarget != null
+  const formId = useId()
+
+  const defaultMonth = useMemo(() => {
+    if (editTarget) return editTarget.monthStart.slice(0, 10)
+    return monthStartIso(new Date())
+  }, [editTarget])
+
+  const defaultPaymentDate = useMemo(() => {
+    if (editTarget) {
+      return paymentDateDefaultForMonth(editTarget.monthStart, editTarget.paymentDay)
+    }
+    return paymentDateDefaultForMonth(monthStartIso(new Date()), new Date().getDate())
+  }, [editTarget])
+
+  const [state, formAction, pending] = useActionState(saveBudget, undefined as ActionResult | undefined)
+
+  useEffect(() => {
+    if (!state?.success || !isEdit) return
+    const t = window.setTimeout(() => {
+      onCancelEdit?.()
+    }, 450)
+    return () => window.clearTimeout(t)
+  }, [state?.success, isEdit, onCancelEdit])
+
+  const handleClickCancelEdit = () => {
+    onCancelEdit?.()
+  }
 
   return (
     <form
       action={formAction}
       className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
     >
+      {isEdit ? <input type="hidden" name="budgetId" value={editTarget.budgetId} /> : null}
       <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-        Definir o actualizar presupuesto
+        {isEdit ? "Actualizar presupuesto" : "Definir o actualizar presupuesto"}
       </h2>
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        Límite mensual por categoría de gasto. Si ya existe para el mes, se actualiza.
-      </p>
+      {isEdit ? (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Estás editando <span className="font-medium text-zinc-700 dark:text-zinc-300">{editTarget.categoryName}</span>.
+          Si cambiás el mes, este ítem puede dejar de verse en &quot;Estado del mes&quot; actual.
+        </p>
+      ) : (
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          Límite mensual por categoría de gasto. Si ya existe para el mes, se actualiza.
+        </p>
+      )}
       <div>
-        <label htmlFor="budget-cat" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label
+          htmlFor={`${formId}-budget-cat`}
+          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
           Categoría
         </label>
         <select
-          id="budget-cat"
+          id={`${formId}-budget-cat`}
           name="categoryId"
           required
+          defaultValue={isEdit ? editTarget.categoryId : undefined}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
-          <option value="">Elegí categoría de gasto</option>
+          {!isEdit ? <option value="">Elegí categoría de gasto</option> : null}
           {expenseCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.name}
@@ -46,31 +100,58 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
         </select>
       </div>
       <div>
-        <label htmlFor="budget-limit" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label
+          htmlFor={`${formId}-budget-limit`}
+          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
           Límite (USD)
         </label>
         <input
-          id="budget-limit"
+          id={`${formId}-budget-limit`}
           name="amountLimit"
           type="number"
           inputMode="decimal"
           min="0"
           step="0.01"
           required
+          defaultValue={isEdit ? editTarget.limit : undefined}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>
       <div>
-        <label htmlFor="budget-month" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+        <label
+          htmlFor={`${formId}-budget-month`}
+          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
           Mes (primer día)
         </label>
         <input
-          id="budget-month"
+          id={`${formId}-budget-month`}
           name="monthStart"
           type="date"
           defaultValue={defaultMonth}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
+      </div>
+      <div>
+        <label
+          htmlFor={`${formId}-budget-payment-date`}
+          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          Día de pago
+        </label>
+        <input
+          id={`${formId}-budget-payment-date`}
+          name="paymentDate"
+          type="date"
+          required
+          defaultValue={defaultPaymentDate}
+          aria-describedby={`${formId}-budget-payment-date-hint`}
+          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+        />
+        <p id={`${formId}-budget-payment-date-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Elegí una fecha: guardamos solo el día del mes (1 a 31) que cae en esa fecha.
+        </p>
       </div>
       {state?.error ? (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
@@ -79,16 +160,27 @@ export const BudgetForm = ({ expenseCategories }: BudgetFormProps) => {
       ) : null}
       {state?.success ? (
         <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          Presupuesto guardado.
+          {isEdit ? "Cambios guardados." : "Presupuesto guardado."}
         </p>
       ) : null}
-      <button
-        type="submit"
-        disabled={pending || expenseCategories.length === 0}
-        className="min-h-11 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50"
-      >
-        {pending ? "Guardando…" : "Guardar presupuesto"}
-      </button>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
+        <button
+          type="submit"
+          disabled={pending || expenseCategories.length === 0}
+          className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+        >
+          {pending ? "Guardando…" : isEdit ? "Guardar cambios" : "Guardar presupuesto"}
+        </button>
+        {isEdit ? (
+          <button
+            type="button"
+            onClick={handleClickCancelEdit}
+            className="min-h-11 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:shrink-0"
+          >
+            Cancelar edición
+          </button>
+        ) : null}
+      </div>
     </form>
   )
 }

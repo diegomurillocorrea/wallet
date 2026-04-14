@@ -3,8 +3,13 @@
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
+import type { BudgetAlertRow } from "@/lib/types/wallet"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
-import { currentMonthRange, normalizeMonthStartInput } from "@/lib/dates/month"
+import {
+  currentMonthRange,
+  normalizeMonthStartInput,
+  parsePaymentDayFromDateInput,
+} from "@/lib/dates/month"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
 
 export async function ensureDefaultCategories() {
@@ -262,6 +267,7 @@ const budgetSchema = z.object({
   categoryId: z.string().uuid(),
   amountLimit: z.coerce.number().positive("El límite debe ser mayor a 0"),
   monthStart: z.string().optional(),
+  paymentDate: z.string().min(10, "Elegí el día de pago en el calendario"),
 })
 
 export async function upsertBudget(formData: FormData): Promise<ActionResult> {
@@ -275,10 +281,16 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
     categoryId: formData.get("categoryId"),
     amountLimit: formData.get("amountLimit"),
     monthStart: formData.get("monthStart") || undefined,
+    paymentDate: formData.get("paymentDate"),
   })
   if (!parsed.success) {
     const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
     return { error: msg ?? "Datos inválidos" }
+  }
+
+  const paymentDay = parsePaymentDayFromDateInput(parsed.data.paymentDate)
+  if (paymentDay == null) {
+    return { error: "La fecha de día de pago no es válida" }
   }
 
   const { data: cat } = await supabase
@@ -305,7 +317,10 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
   if (existing?.id) {
     const { error } = await supabase
       .from("budgets")
-      .update({ amount_limit: parsed.data.amountLimit })
+      .update({
+        amount_limit: parsed.data.amountLimit,
+        payment_day: paymentDay,
+      })
       .eq("id", existing.id)
       .eq("user_id", user.id)
     if (error) return { error: error.message }
@@ -315,9 +330,90 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       category_id: parsed.data.categoryId,
       amount_limit: parsed.data.amountLimit,
       month_start: monthStart,
+      payment_day: paymentDay,
     })
     if (error) return { error: error.message }
   }
+  revalidatePath("/dashboard")
+  revalidatePath("/budgets")
+  return { success: true }
+}
+
+const updateBudgetSchema = budgetSchema.extend({
+  budgetId: z.string().uuid(),
+})
+
+export async function updateBudget(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "No autenticado" }
+
+  const parsed = updateBudgetSchema.safeParse({
+    budgetId: formData.get("budgetId"),
+    categoryId: formData.get("categoryId"),
+    amountLimit: formData.get("amountLimit"),
+    monthStart: formData.get("monthStart") || undefined,
+    paymentDate: formData.get("paymentDate"),
+  })
+  if (!parsed.success) {
+    const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
+    return { error: msg ?? "Datos inválidos" }
+  }
+
+  const paymentDay = parsePaymentDayFromDateInput(parsed.data.paymentDate)
+  if (paymentDay == null) {
+    return { error: "La fecha de día de pago no es válida" }
+  }
+
+  const { data: owned } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("id", parsed.data.budgetId)
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (!owned?.id) return { error: "Presupuesto no encontrado" }
+
+  const { data: cat } = await supabase
+    .from("categories")
+    .select("kind")
+    .eq("id", parsed.data.categoryId)
+    .eq("user_id", user.id)
+    .single()
+
+  if (!cat || cat.kind !== "expense") {
+    return { error: "Solo categorías de gasto pueden tener presupuesto" }
+  }
+
+  const monthStart = normalizeMonthStartInput(parsed.data.monthStart)
+
+  const { data: duplicate } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("user_id", user.id)
+    .eq("category_id", parsed.data.categoryId)
+    .eq("month_start", monthStart)
+    .neq("id", parsed.data.budgetId)
+    .maybeSingle()
+
+  if (duplicate?.id) {
+    return { error: "Ya existe un presupuesto para esa categoría en ese mes" }
+  }
+
+  const { error } = await supabase
+    .from("budgets")
+    .update({
+      category_id: parsed.data.categoryId,
+      amount_limit: parsed.data.amountLimit,
+      month_start: monthStart,
+      payment_day: paymentDay,
+    })
+    .eq("id", parsed.data.budgetId)
+    .eq("user_id", user.id)
+
+  if (error) return { error: error.message }
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
   return { success: true }
@@ -342,7 +438,7 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   return { success: true }
 }
 
-export async function getBudgetAlertsForUser() {
+export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
   const supabase = await createClient()
   const {
     data: { user },
@@ -358,6 +454,7 @@ export async function getBudgetAlertsForUser() {
       id,
       amount_limit,
       month_start,
+      payment_day,
       category:categories ( id, name, color, icon )
     `
     )
@@ -401,6 +498,9 @@ export async function getBudgetAlertsForUser() {
     return [
       {
         budgetId: b.id,
+        categoryId: cat.id,
+        monthStart: b.month_start as string,
+        paymentDay: Math.min(31, Math.max(1, Number(b.payment_day) || 1)),
         categoryName: cat.name,
         color: cat.color,
         icon: cat.icon,
