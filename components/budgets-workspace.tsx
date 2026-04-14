@@ -18,6 +18,8 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
   const [editTarget, setEditTarget] = useState<BudgetEditTarget | null>(null)
   const formAnchorRef = useRef<HTMLDivElement>(null)
 
+  const totalBudgeted = budgets.reduce((sum, b) => sum + b.limit, 0)
+
   const handleCancelEdit = useCallback(() => {
     setEditTarget(null)
   }, [])
@@ -59,7 +61,23 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
             Todavía no definiste presupuestos para este mes. Usá el formulario para agregar uno.
           </p>
         ) : (
-          <ul className="mt-4 flex flex-col gap-4">
+          <>
+            <div
+              className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"
+              aria-label="Resumen de presupuestos del mes"
+            >
+              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+                Total presupuestado
+              </p>
+              <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+                {formatMoney(totalBudgeted)}
+              </p>
+              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+                Suma de los límites en {budgets.length}{" "}
+                {budgets.length === 1 ? "categoría" : "categorías"}
+              </p>
+            </div>
+            <ul className="mt-4 flex flex-col gap-4">
             {budgets.map((b) => {
               const isRowEditing = editTarget?.budgetId === b.budgetId
               return (
@@ -137,6 +155,7 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
               )
             })}
           </ul>
+          </>
         )}
       </section>
     </div>
