@@ -1,13 +1,15 @@
 "use client"
 
 import { useActionState, useEffect, useId, useMemo } from "react"
+import Link from "next/link"
 import {
   updateBudget,
   upsertBudget,
   type ActionResult,
 } from "@/app/(app)/actions/wallet-actions"
+import { holderShortFromCard } from "@/lib/credit-card/format"
 import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
-import type { BudgetEditTarget, CategoryRow } from "@/lib/types/wallet"
+import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
 
 const saveBudget = async (
   _: ActionResult | undefined,
@@ -20,12 +22,17 @@ const saveBudget = async (
 
 interface BudgetFormProps {
   expenseCategories: CategoryRow[]
+  creditCards: CreditCardListItem[]
   editTarget?: BudgetEditTarget | null
   onCancelEdit?: () => void
 }
 
+const creditOptionLabel = (c: CreditCardListItem): string =>
+  `•••• ${c.last4} — ${holderShortFromCard(c.holder_first_name, c.holder_last_name)} · ${c.exp_label}`
+
 export const BudgetForm = ({
   expenseCategories,
+  creditCards,
   editTarget = null,
   onCancelEdit,
 }: BudgetFormProps) => {
@@ -151,6 +158,44 @@ export const BudgetForm = ({
         />
         <p id={`${formId}-budget-payment-date-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           Elegí una fecha: guardamos solo el día del mes (1 a 31) que cae en esa fecha.
+        </p>
+      </div>
+      <div>
+        <label
+          htmlFor={`${formId}-budget-card`}
+          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
+        >
+          Tarjeta (opcional)
+        </label>
+        {creditCards.length === 0 ? (
+          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+            No tenés tarjetas registradas.{" "}
+            <Link
+              href="/credit-cards"
+              className="font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+            >
+              Cargá una en Tarjetas
+            </Link>{" "}
+            para vincularla al débito mensual.
+          </p>
+        ) : (
+          <select
+            id={`${formId}-budget-card`}
+            name="creditCardId"
+            defaultValue={isEdit && editTarget.creditCardId ? editTarget.creditCardId : ""}
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            aria-describedby={`${formId}-budget-card-hint`}
+          >
+            <option value="">Sin tarjeta</option>
+            {creditCards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {creditOptionLabel(c)}
+              </option>
+            ))}
+          </select>
+        )}
+        <p id={`${formId}-budget-card-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Referencia para saber en qué plástico cae este presupuesto cada mes.
         </p>
       </div>
       {state?.error ? (

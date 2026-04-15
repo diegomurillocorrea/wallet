@@ -1,10 +1,15 @@
 "use client"
 
 import { Pencil } from "lucide-react"
+import Link from "next/link"
 import { useActionState, useCallback, useEffect, useId, useRef, useState } from "react"
 import { updateBudget, type ActionResult } from "@/app/(app)/actions/wallet-actions"
+import { holderShortFromCard } from "@/lib/credit-card/format"
 import { paymentDateDefaultForMonth } from "@/lib/dates/month"
-import type { BudgetEditTarget, CategoryRow } from "@/lib/types/wallet"
+import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
+
+const creditOptionLabel = (c: CreditCardListItem): string =>
+  `•••• ${c.last4} — ${holderShortFromCard(c.holder_first_name, c.holder_last_name)} · ${c.exp_label}`
 
 /** @deprecated Usá BudgetEditTarget; se mantiene por compatibilidad con imports */
 export type EditBudgetTarget = BudgetEditTarget
@@ -12,10 +17,11 @@ export type EditBudgetTarget = BudgetEditTarget
 interface EditBudgetFormInnerProps {
   budget: BudgetEditTarget
   expenseCategories: CategoryRow[]
+  creditCards: CreditCardListItem[]
   onSaved: () => void
 }
 
-const EditBudgetFormInner = ({ budget, expenseCategories, onSaved }: EditBudgetFormInnerProps) => {
+const EditBudgetFormInner = ({ budget, expenseCategories, creditCards, onSaved }: EditBudgetFormInnerProps) => {
   const [state, formAction, pending] = useActionState(
     async (_: ActionResult | undefined, fd: FormData) => updateBudget(fd),
     undefined as ActionResult | undefined
@@ -102,6 +108,33 @@ const EditBudgetFormInner = ({ budget, expenseCategories, onSaved }: EditBudgetF
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>
+      <div>
+        <label htmlFor={`${formId}-card`} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          Tarjeta (opcional)
+        </label>
+        {creditCards.length === 0 ? (
+          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
+            <Link href="/credit-cards" className="font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
+              Registrar tarjeta
+            </Link>{" "}
+            para vincularla.
+          </p>
+        ) : (
+          <select
+            id={`${formId}-card`}
+            name="creditCardId"
+            defaultValue={budget.creditCardId ?? ""}
+            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+          >
+            <option value="">Sin tarjeta</option>
+            {creditCards.map((c) => (
+              <option key={c.id} value={c.id}>
+                {creditOptionLabel(c)}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
       {state?.error ? (
         <p className="text-sm text-red-600 dark:text-red-400" role="alert">
           {state.error}
@@ -128,10 +161,11 @@ const EditBudgetFormInner = ({ budget, expenseCategories, onSaved }: EditBudgetF
 
 interface EditBudgetDialogProps {
   expenseCategories: CategoryRow[]
+  creditCards: CreditCardListItem[]
   budget: BudgetEditTarget
 }
 
-export const EditBudgetDialog = ({ expenseCategories, budget }: EditBudgetDialogProps) => {
+export const EditBudgetDialog = ({ expenseCategories, creditCards, budget }: EditBudgetDialogProps) => {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const titleId = useId()
   const [formNonce, setFormNonce] = useState(0)
@@ -159,7 +193,7 @@ export const EditBudgetDialog = ({ expenseCategories, budget }: EditBudgetDialog
       </button>
       <dialog
         ref={dialogRef}
-        className="w-[min(100vw-2rem,26rem)] rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-xl backdrop:bg-black/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
+        className="fixed left-1/2 top-1/2 z-50 max-h-[min(90dvh,100%)] w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-xl backdrop:bg-black/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
         aria-labelledby={titleId}
       >
         <div className="flex flex-col gap-1 border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 sm:px-6">
@@ -175,6 +209,7 @@ export const EditBudgetDialog = ({ expenseCategories, budget }: EditBudgetDialog
           key={formNonce}
           budget={budget}
           expenseCategories={expenseCategories}
+          creditCards={creditCards}
           onSaved={handleCloseDialog}
         />
         <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-6">

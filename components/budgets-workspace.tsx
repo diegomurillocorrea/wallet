@@ -7,14 +7,15 @@ import { CategoryIcon } from "@/components/category-icon"
 import { DeleteBudgetButton } from "@/components/delete-budget-button"
 import { monthLabel } from "@/lib/dates/month"
 import { formatMoney } from "@/lib/format/money"
-import type { BudgetAlertRow, BudgetEditTarget, CategoryRow } from "@/lib/types/wallet"
+import type { BudgetAlertRow, BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
 
 interface BudgetsWorkspaceProps {
   expenseCategories: CategoryRow[]
+  creditCards: CreditCardListItem[]
   budgets: BudgetAlertRow[]
 }
 
-export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspaceProps) => {
+export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: BudgetsWorkspaceProps) => {
   const [editTarget, setEditTarget] = useState<BudgetEditTarget | null>(null)
   const formAnchorRef = useRef<HTMLDivElement>(null)
 
@@ -32,6 +33,7 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
       limit: b.limit,
       monthStart: b.monthStart,
       paymentDay: b.paymentDay,
+      creditCardId: b.creditCardId,
     })
     queueMicrotask(() => {
       formAnchorRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
@@ -44,6 +46,7 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
         <BudgetForm
           key={editTarget?.budgetId ?? "create"}
           expenseCategories={expenseCategories}
+          creditCards={creditCards}
           editTarget={editTarget}
           onCancelEdit={handleCancelEdit}
         />
@@ -121,6 +124,15 @@ export const BudgetsWorkspace = ({ expenseCategories, budgets }: BudgetsWorkspac
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                       Día de pago: <span className="tabular-nums">{b.paymentDay}</span> de cada mes
                     </p>
+                    {b.card ? (
+                      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-300">
+                        <span className="rounded-md bg-zinc-200/80 px-1.5 py-0.5 font-medium tabular-nums dark:bg-zinc-800">
+                          •••• {b.card.last4}
+                        </span>{" "}
+                        <span className="text-zinc-500 dark:text-zinc-400">{b.card.holderShort}</span>
+                        <span className="text-zinc-400 dark:text-zinc-500"> · vence {b.card.exp_label}</span>
+                      </p>
+                    ) : null}
                     <p className="mt-0.5 text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                       {formatMoney(b.spent)} de {formatMoney(b.limit)}
                     </p>

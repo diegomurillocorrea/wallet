@@ -1,3 +1,4 @@
+import { listCreditCardsForUser } from "@/app/(app)/actions/credit-card-actions"
 import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { ExpenseByCategoryChart } from "@/components/charts/expense-by-category-chart"
 import { IncomeExpenseBars } from "@/components/charts/income-expense-bars"
@@ -118,7 +119,7 @@ export default async function DashboardPage() {
 
   const recent = (recentData ?? []) as unknown as RecentRow[]
 
-  const alerts = await getBudgetAlertsForUser()
+  const [alerts, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
   const expenseCategories = categories.filter((c) => c.kind === "expense")
 
   return (
@@ -197,6 +198,7 @@ export default async function DashboardPage() {
                         </span>
                         <EditBudgetDialog
                           expenseCategories={expenseCategories}
+                          creditCards={creditCards}
                           budget={{
                             budgetId: a.budgetId,
                             categoryId: a.categoryId,
@@ -204,6 +206,7 @@ export default async function DashboardPage() {
                             limit: a.limit,
                             monthStart: a.monthStart,
                             paymentDay: a.paymentDay,
+                            creditCardId: a.creditCardId,
                           }}
                         />
                       </div>
@@ -211,6 +214,14 @@ export default async function DashboardPage() {
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                       Pago día <span className="tabular-nums">{a.paymentDay}</span>
                     </p>
+                    {a.card ? (
+                      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-300">
+                        <span className="rounded-md bg-zinc-200/80 px-1.5 py-0.5 font-medium tabular-nums dark:bg-zinc-800">
+                          •••• {a.card.last4}
+                        </span>{" "}
+                        <span className="text-zinc-500 dark:text-zinc-400">{a.card.holderShort}</span>
+                      </p>
+                    ) : null}
                     <div
                       className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
                       role="progressbar"

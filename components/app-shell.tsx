@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import {
+  CreditCard,
   LayoutDashboard,
   ListOrdered,
   LogOut,
@@ -18,6 +19,7 @@ const nav = [
   { href: "/transactions", label: "Movimientos", icon: ListOrdered },
   { href: "/categories", label: "Categorías", icon: Tags },
   { href: "/budgets", label: "Presupuestos", icon: PieChart },
+  { href: "/credit-cards", label: "Tarjetas", icon: CreditCard },
 ] as const
 
 interface AppShellProps {

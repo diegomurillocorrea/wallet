@@ -11,6 +11,30 @@ import {
   parsePaymentDayFromDateInput,
 } from "@/lib/dates/month"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
+import { formatExpMmYy, holderShortFromCard, panLast4 } from "@/lib/credit-card/format"
+
+const parseCreditCardIdFromForm = (fd: FormData): string | undefined => {
+  const v = fd.get("creditCardId")
+  if (v == null) return undefined
+  const s = String(v).trim()
+  return s === "" ? undefined : s
+}
+
+const resolveOwnedCreditCardId = async (
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  raw: string | undefined
+): Promise<string | null | { error: string }> => {
+  if (raw == null) return null
+  const { data } = await supabase
+    .from("credit_cards")
+    .select("id")
+    .eq("id", raw)
+    .eq("user_id", userId)
+    .maybeSingle()
+  if (!data?.id) return { error: "La tarjeta seleccionada no es válida" }
+  return raw
+}
 
 export async function ensureDefaultCategories() {
   const supabase = await createClient()
@@ -306,6 +330,16 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
 
   const monthStart = normalizeMonthStartInput(parsed.data.monthStart)
 
+  const creditResolved = await resolveOwnedCreditCardId(
+    supabase,
+    user.id,
+    parseCreditCardIdFromForm(formData)
+  )
+  if (creditResolved != null && typeof creditResolved === "object" && "error" in creditResolved) {
+    return creditResolved
+  }
+  const creditCardId = typeof creditResolved === "string" ? creditResolved : null
+
   const { data: existing } = await supabase
     .from("budgets")
     .select("id")
@@ -320,6 +354,7 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       .update({
         amount_limit: parsed.data.amountLimit,
         payment_day: paymentDay,
+        credit_card_id: creditCardId,
       })
       .eq("id", existing.id)
       .eq("user_id", user.id)
@@ -331,6 +366,7 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       amount_limit: parsed.data.amountLimit,
       month_start: monthStart,
       payment_day: paymentDay,
+      credit_card_id: creditCardId,
     })
     if (error) return { error: error.message }
   }
@@ -402,6 +438,16 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     return { error: "Ya existe un presupuesto para esa categoría en ese mes" }
   }
 
+  const creditResolved = await resolveOwnedCreditCardId(
+    supabase,
+    user.id,
+    parseCreditCardIdFromForm(formData)
+  )
+  if (creditResolved != null && typeof creditResolved === "object" && "error" in creditResolved) {
+    return creditResolved
+  }
+  const creditCardId = typeof creditResolved === "string" ? creditResolved : null
+
   const { error } = await supabase
     .from("budgets")
     .update({
@@ -409,6 +455,7 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
       amount_limit: parsed.data.amountLimit,
       month_start: monthStart,
       payment_day: paymentDay,
+      credit_card_id: creditCardId,
     })
     .eq("id", parsed.data.budgetId)
     .eq("user_id", user.id)
@@ -455,6 +502,7 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
       amount_limit,
       month_start,
       payment_day,
+      credit_card_id,
       category:categories ( id, name, color, icon )
     `
     )
@@ -462,6 +510,35 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     .eq("month_start", monthStart)
 
   if (!budgets?.length) return []
+
+  const cardIds = [
+    ...new Set(
+      budgets
+        .map((b) => b.credit_card_id as string | null | undefined)
+        .filter((id): id is string => typeof id === "string" && id.length > 0)
+    ),
+  ]
+
+  const cardById = new Map<
+    string,
+    { pan: string, holder_first_name: string, holder_last_name: string, exp_month: number, exp_year: number }
+  >()
+  if (cardIds.length > 0) {
+    const { data: cards } = await supabase
+      .from("credit_cards")
+      .select("id, pan, holder_first_name, holder_last_name, exp_month, exp_year")
+      .eq("user_id", user.id)
+      .in("id", cardIds)
+    for (const c of cards ?? []) {
+      cardById.set(c.id as string, {
+        pan: c.pan as string,
+        holder_first_name: c.holder_first_name as string,
+        holder_last_name: c.holder_last_name as string,
+        exp_month: Number(c.exp_month),
+        exp_year: Number(c.exp_year),
+      })
+    }
+  }
 
   const { data: tx } = await supabase
     .from("transactions")
@@ -495,6 +572,16 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     let level: "ok" | "warn" | "over" = "ok"
     if (ratio >= 1) level = "over"
     else if (ratio >= 0.8) level = "warn"
+    const cid = (b.credit_card_id as string | null | undefined) ?? null
+    const crow = cid ? cardById.get(cid) : undefined
+    const card =
+      crow != null
+        ? {
+            last4: panLast4(crow.pan),
+            holderShort: holderShortFromCard(crow.holder_first_name, crow.holder_last_name),
+            exp_label: formatExpMmYy(crow.exp_month, crow.exp_year),
+          }
+        : null
     return [
       {
         budgetId: b.id,
@@ -508,6 +595,8 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
         limit,
         ratio,
         level,
+        creditCardId: cid,
+        card,
       },
     ]
   })

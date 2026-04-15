@@ -1,3 +1,4 @@
+import { listCreditCardsForUser } from "@/app/(app)/actions/credit-card-actions"
 import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { BudgetsWorkspace } from "@/components/budgets-workspace"
 import { currentMonthRange, monthLabel } from "@/lib/dates/month"
@@ -21,7 +22,7 @@ export default async function BudgetsPage() {
   const expenseCategories = (categoriesData ?? []) as CategoryRow[]
 
   const { monthStart } = currentMonthRange()
-  const budgets = await getBudgetAlertsForUser()
+  const [budgets, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
 
   return (
     <div className="flex flex-col gap-8">
@@ -34,7 +35,7 @@ export default async function BudgetsPage() {
         </p>
       </header>
 
-      <BudgetsWorkspace expenseCategories={expenseCategories} budgets={budgets} />
+      <BudgetsWorkspace expenseCategories={expenseCategories} creditCards={creditCards} budgets={budgets} />
     </div>
   )
 }
