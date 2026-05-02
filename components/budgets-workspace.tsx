@@ -5,6 +5,7 @@ import { useCallback, useRef, useState } from "react"
 import { BudgetForm } from "@/components/budget-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteBudgetButton } from "@/components/delete-budget-button"
+import { RegisterBudgetPaymentDialog } from "@/components/register-budget-payment-dialog"
 import { monthLabel } from "@/lib/dates/month"
 import { formatMoney } from "@/lib/format/money"
 import type { BudgetAlertRow, BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
@@ -13,9 +14,15 @@ interface BudgetsWorkspaceProps {
   expenseCategories: CategoryRow[]
   creditCards: CreditCardListItem[]
   budgets: BudgetAlertRow[]
+  defaultPaymentOccurredAt: string
 }
 
-export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: BudgetsWorkspaceProps) => {
+export const BudgetsWorkspace = ({
+  expenseCategories,
+  creditCards,
+  budgets,
+  defaultPaymentOccurredAt,
+}: BudgetsWorkspaceProps) => {
   const [editTarget, setEditTarget] = useState<BudgetEditTarget | null>(null)
   const formAnchorRef = useRef<HTMLDivElement>(null)
 
@@ -101,6 +108,11 @@ export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: Bu
                         {b.categoryName}
                       </span>
                       <div className="flex shrink-0 items-center gap-0.5">
+                        <RegisterBudgetPaymentDialog
+                          categoryId={b.categoryId}
+                          categoryName={b.categoryName}
+                          defaultOccurredAt={defaultPaymentOccurredAt}
+                        />
                         <button
                           type="button"
                           onClick={() => handleStartEdit(b)}

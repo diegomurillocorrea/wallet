@@ -4,10 +4,11 @@ import { ExpenseByCategoryChart } from "@/components/charts/expense-by-category-
 import { IncomeExpenseBars } from "@/components/charts/income-expense-bars"
 import { CategoryIcon } from "@/components/category-icon"
 import { EditBudgetDialog } from "@/components/edit-budget-dialog"
+import { RegisterBudgetPaymentDialog } from "@/components/register-budget-payment-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { MotionStatCard } from "@/components/motion-stat-card"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
-import { monthLabel } from "@/lib/dates/month"
+import { clampIsoDateToRange, monthLabel } from "@/lib/dates/month"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { formatMoney } from "@/lib/format/money"
@@ -42,6 +43,11 @@ export default async function DashboardPage() {
   if (!user) return null
 
   const { start, end, monthStart } = await getWalletAppMonthRange()
+  const defaultPaymentOccurredAt = clampIsoDateToRange(
+    new Date().toISOString().slice(0, 10),
+    start,
+    end
+  )
 
   const { data: categoriesData } = await supabase
     .from("categories")
@@ -193,6 +199,11 @@ export default async function DashboardPage() {
                         <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                           {formatMoney(a.spent)} / {formatMoney(a.limit)}
                         </span>
+                        <RegisterBudgetPaymentDialog
+                          categoryId={a.categoryId}
+                          categoryName={a.categoryName}
+                          defaultOccurredAt={defaultPaymentOccurredAt}
+                        />
                         <EditBudgetDialog
                           expenseCategories={expenseCategories}
                           creditCards={creditCards}

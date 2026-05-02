@@ -27,6 +27,16 @@ export const currentMonthRange = (d = new Date()) => {
   }
 }
 
+/** `candidate` en formato YYYY-MM-DD, acotado al rango inclusive del mes de la app */
+export const clampIsoDateToRange = (candidate: string, rangeStart: string, rangeEnd: string) => {
+  const c = candidate.slice(0, 10)
+  const s = rangeStart.slice(0, 10)
+  const e = rangeEnd.slice(0, 10)
+  if (c < s) return s
+  if (c > e) return e
+  return c
+}
+
 export const previousMonthStart = (d = new Date()) =>
   format(startOfMonth(subMonths(d, 1)), "yyyy-MM-dd")
 

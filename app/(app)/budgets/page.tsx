@@ -1,7 +1,7 @@
 import { listCreditCardsForUser } from "@/app/(app)/actions/credit-card-actions"
 import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { BudgetsWorkspace } from "@/components/budgets-workspace"
-import { monthLabel } from "@/lib/dates/month"
+import { clampIsoDateToRange, monthLabel } from "@/lib/dates/month"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
@@ -22,7 +22,12 @@ export default async function BudgetsPage() {
 
   const expenseCategories = (categoriesData ?? []) as CategoryRow[]
 
-  const { monthStart } = await getWalletAppMonthRange()
+  const { start, end, monthStart } = await getWalletAppMonthRange()
+  const defaultPaymentOccurredAt = clampIsoDateToRange(
+    new Date().toISOString().slice(0, 10),
+    start,
+    end
+  )
   const [budgets, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
 
   return (
@@ -36,7 +41,12 @@ export default async function BudgetsPage() {
         </p>
       </header>
 
-      <BudgetsWorkspace expenseCategories={expenseCategories} creditCards={creditCards} budgets={budgets} />
+      <BudgetsWorkspace
+        expenseCategories={expenseCategories}
+        creditCards={creditCards}
+        budgets={budgets}
+        defaultPaymentOccurredAt={defaultPaymentOccurredAt}
+      />
     </div>
   )
 }
