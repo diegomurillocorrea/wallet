@@ -31,7 +31,6 @@ export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: Bu
       categoryId: b.categoryId,
       categoryName: b.categoryName,
       limit: b.limit,
-      monthStart: b.monthStart,
       paymentDay: b.paymentDay,
       creditCardId: b.creditCardId,
     })
@@ -57,11 +56,11 @@ export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: Bu
         aria-labelledby="budget-list-heading"
       >
         <h2 id="budget-list-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-          Estado del mes
+          Avance vs el mes en Resumen
         </h2>
         {budgets.length === 0 ? (
           <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-            Todavía no definiste presupuestos para este mes. Usá el formulario para agregar uno.
+            Todavía no definiste presupuestos. Usá el formulario para agregar uno.
           </p>
         ) : (
           <>
@@ -119,7 +118,7 @@ export const BudgetsWorkspace = ({ expenseCategories, creditCards, budgets }: Bu
                       className="mt-0.5 block text-xs text-zinc-500 dark:text-zinc-400"
                       dateTime={b.monthStart}
                     >
-                      Mes: {monthLabel(b.monthStart)}
+                      Gasto medido en {monthLabel(b.monthStart)}
                     </time>
                     <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
                       Día de pago: <span className="tabular-nums">{b.paymentDay}</span> de cada mes

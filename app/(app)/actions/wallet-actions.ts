@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server"
 import type { BudgetAlertRow } from "@/lib/types/wallet"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
 import {
+  BUDGET_DB_MONTH_ANCHOR,
   normalizeMonthStartInput,
   parsePaymentDayFromDateInput,
 } from "@/lib/dates/month"
@@ -291,7 +292,6 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
 const budgetSchema = z.object({
   categoryId: z.string().uuid(),
   amountLimit: z.coerce.number().positive("El límite debe ser mayor a 0"),
-  monthStart: z.string().optional(),
   paymentDate: z.string().min(10, "Elegí el día de pago en el calendario"),
 })
 
@@ -305,7 +305,6 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
   const parsed = budgetSchema.safeParse({
     categoryId: formData.get("categoryId"),
     amountLimit: formData.get("amountLimit"),
-    monthStart: formData.get("monthStart") || undefined,
     paymentDate: formData.get("paymentDate"),
   })
   if (!parsed.success) {
@@ -329,8 +328,6 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
     return { error: "Solo categorías de gasto pueden tener presupuesto" }
   }
 
-  const monthStart = normalizeMonthStartInput(parsed.data.monthStart)
-
   const creditResolved = await resolveOwnedCreditCardId(
     supabase,
     user.id,
@@ -346,7 +343,6 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
     .select("id")
     .eq("user_id", user.id)
     .eq("category_id", parsed.data.categoryId)
-    .eq("month_start", monthStart)
     .maybeSingle()
 
   if (existing?.id) {
@@ -354,6 +350,7 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       .from("budgets")
       .update({
         amount_limit: parsed.data.amountLimit,
+        month_start: BUDGET_DB_MONTH_ANCHOR,
         payment_day: paymentDay,
         credit_card_id: creditCardId,
       })
@@ -365,7 +362,7 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       user_id: user.id,
       category_id: parsed.data.categoryId,
       amount_limit: parsed.data.amountLimit,
-      month_start: monthStart,
+      month_start: BUDGET_DB_MONTH_ANCHOR,
       payment_day: paymentDay,
       credit_card_id: creditCardId,
     })
@@ -391,7 +388,6 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     budgetId: formData.get("budgetId"),
     categoryId: formData.get("categoryId"),
     amountLimit: formData.get("amountLimit"),
-    monthStart: formData.get("monthStart") || undefined,
     paymentDate: formData.get("paymentDate"),
   })
   if (!parsed.success) {
@@ -424,19 +420,16 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     return { error: "Solo categorías de gasto pueden tener presupuesto" }
   }
 
-  const monthStart = normalizeMonthStartInput(parsed.data.monthStart)
-
   const { data: duplicate } = await supabase
     .from("budgets")
     .select("id")
     .eq("user_id", user.id)
     .eq("category_id", parsed.data.categoryId)
-    .eq("month_start", monthStart)
     .neq("id", parsed.data.budgetId)
     .maybeSingle()
 
   if (duplicate?.id) {
-    return { error: "Ya existe un presupuesto para esa categoría en ese mes" }
+    return { error: "Ya existe un presupuesto para esa categoría" }
   }
 
   const creditResolved = await resolveOwnedCreditCardId(
@@ -454,7 +447,7 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     .update({
       category_id: parsed.data.categoryId,
       amount_limit: parsed.data.amountLimit,
-      month_start: monthStart,
+      month_start: BUDGET_DB_MONTH_ANCHOR,
       payment_day: paymentDay,
       credit_card_id: creditCardId,
     })
@@ -501,14 +494,12 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
       `
       id,
       amount_limit,
-      month_start,
       payment_day,
       credit_card_id,
       category:categories ( id, name, color, icon )
     `
     )
     .eq("user_id", user.id)
-    .eq("month_start", monthStart)
 
   if (!budgets?.length) return []
 
@@ -587,8 +578,6 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
       {
         budgetId: b.id,
         categoryId: cat.id,
-        monthStart: b.month_start as string,
-        paymentDay: Math.min(31, Math.max(1, Number(b.payment_day) || 1)),
         categoryName: cat.name,
         color: cat.color,
         icon: cat.icon,
@@ -596,6 +585,8 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
         limit,
         ratio,
         level,
+        monthStart,
+        paymentDay: Math.min(31, Math.max(1, Number(b.payment_day) || 1)),
         creditCardId: cid,
         card,
       },
@@ -619,4 +610,5 @@ export async function setWalletAppMonth(monthStartIso: string): Promise<void> {
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
   revalidatePath("/transactions")
+  revalidatePath("/credit-cards/vinculos")
 }

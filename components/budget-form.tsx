@@ -39,16 +39,12 @@ export const BudgetForm = ({
   const isEdit = editTarget != null
   const formId = useId()
 
-  const defaultMonth = useMemo(() => {
-    if (editTarget) return editTarget.monthStart.slice(0, 10)
-    return monthStartIso(new Date())
-  }, [editTarget])
-
   const defaultPaymentDate = useMemo(() => {
+    const refMonth = monthStartIso(new Date())
     if (editTarget) {
-      return paymentDateDefaultForMonth(editTarget.monthStart, editTarget.paymentDay)
+      return paymentDateDefaultForMonth(refMonth, editTarget.paymentDay)
     }
-    return paymentDateDefaultForMonth(monthStartIso(new Date()), new Date().getDate())
+    return paymentDateDefaultForMonth(refMonth, new Date().getDate())
   }, [editTarget])
 
   const [state, formAction, pending] = useActionState(saveBudget, undefined as ActionResult | undefined)
@@ -77,11 +73,11 @@ export const BudgetForm = ({
       {isEdit ? (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
           Estás editando <span className="font-medium text-zinc-700 dark:text-zinc-300">{editTarget.categoryName}</span>.
-          Si cambiás el mes, este ítem puede dejar de verse en &quot;Estado del mes&quot; actual.
+          El límite aplica todos los meses; el avance se compara con el mes elegido en Resumen.
         </p>
       ) : (
         <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Límite mensual por categoría de gasto. Si ya existe para el mes, se actualiza.
+          Límite recurrente por categoría de gasto. Si ya existe para esa categoría, se actualiza.
         </p>
       )}
       <div>
@@ -122,21 +118,6 @@ export const BudgetForm = ({
           step="0.01"
           required
           defaultValue={isEdit ? editTarget.limit : undefined}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-budget-month`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Mes (primer día)
-        </label>
-        <input
-          id={`${formId}-budget-month`}
-          name="monthStart"
-          type="date"
-          defaultValue={defaultMonth}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>

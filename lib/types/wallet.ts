@@ -53,8 +53,9 @@ export interface BudgetLinkedToCardRow {
   color: string
   icon: string
   amountLimit: number
-  /** Gasto acumulado en esa categoría durante el mes del presupuesto */
+  /** Gasto en esa categoría en el mes de contexto (misma cookie que Resumen) */
   spent: number
+  /** Primer día del mes de contexto para etiquetas UI */
   monthStart: string
   paymentDay: number
 }
@@ -78,7 +79,6 @@ export interface BudgetEditTarget {
   categoryId: string
   categoryName: string
   limit: number
-  monthStart: string
   paymentDay: number
   creditCardId: string | null
 }
@@ -94,6 +94,7 @@ export interface BudgetAlertRow {
   limit: number
   ratio: number
   level: "ok" | "warn" | "over"
+  /** Mes de contexto (cookie): el gasto comparado con el límite es de este mes */
   monthStart: string
   paymentDay: number
   creditCardId: string | null

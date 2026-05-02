@@ -1,10 +1,10 @@
 "use server"
 
-import { endOfMonth, format, max, min, parseISO, startOfMonth } from "date-fns"
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
 import { formatExpMmYy, normalizePanDigits, parseExpiryInput, panLast4 } from "@/lib/credit-card/format"
 import { isValidLuhnPan } from "@/lib/credit-card/luhn"
+import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/app/(app)/actions/wallet-actions"
 import type {
@@ -15,6 +15,7 @@ import type {
 
 const revalidateCreditCardPaths = () => {
   revalidatePath("/credit-cards")
+  revalidatePath("/credit-cards/vinculos")
   revalidatePath("/budgets")
   revalidatePath("/dashboard")
 }
@@ -194,21 +195,6 @@ export async function listCreditCardsForUser(): Promise<CreditCardListItem[]> {
   return data.map(rowToListItem)
 }
 
-const spendKey = (categoryId: string, monthStart: string) =>
-  `${categoryId}|${monthStart.slice(0, 10)}`
-
-const boundsFromMonthStarts = (monthStarts: string[]): { start: string, end: string } | null => {
-  const valid = monthStarts.map((s) => s.slice(0, 10)).filter((s) => s.length >= 10)
-  if (valid.length === 0) return null
-  const dates = valid.map((s) => parseISO(s))
-  const earliest = min(dates)
-  const latest = max(dates)
-  return {
-    start: format(startOfMonth(earliest), "yyyy-MM-dd"),
-    end: format(endOfMonth(latest), "yyyy-MM-dd"),
-  }
-}
-
 export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageGroup[]> {
   const supabase = await createClient()
   const {
@@ -219,13 +205,14 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
   const cards = await listCreditCardsForUser()
   if (cards.length === 0) return []
 
+  const { start, end, monthStart } = await getWalletAppMonthRange()
+
   const { data: budgetRows, error } = await supabase
     .from("budgets")
     .select(
       `
       id,
       amount_limit,
-      month_start,
       payment_day,
       credit_card_id,
       category:categories ( id, name, color, icon )
@@ -233,7 +220,6 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     )
     .eq("user_id", user.id)
     .not("credit_card_id", "is", null)
-    .order("month_start", { ascending: false })
 
   if (error) {
     return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
@@ -244,26 +230,19 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
   }
 
-  const bounds = boundsFromMonthStarts(rows.map((b) => b.month_start as string))
-  const spentByCategoryMonth = new Map<string, number>()
+  const { data: tx } = await supabase
+    .from("transactions")
+    .select("category_id, amount")
+    .eq("user_id", user.id)
+    .eq("kind", "expense")
+    .gte("occurred_at", start)
+    .lte("occurred_at", end)
 
-  if (bounds) {
-    const { data: tx } = await supabase
-      .from("transactions")
-      .select("category_id, amount, occurred_at")
-      .eq("user_id", user.id)
-      .eq("kind", "expense")
-      .gte("occurred_at", bounds.start)
-      .lte("occurred_at", bounds.end)
-
-    for (const t of tx ?? []) {
-      const d = parseISO(String(t.occurred_at).slice(0, 10))
-      if (Number.isNaN(d.getTime())) continue
-      const mk = format(startOfMonth(d), "yyyy-MM-dd")
-      const key = spendKey(t.category_id as string, mk)
-      const prev = spentByCategoryMonth.get(key) ?? 0
-      spentByCategoryMonth.set(key, prev + Number(t.amount))
-    }
+  const spentByCategory = new Map<string, number>()
+  for (const t of tx ?? []) {
+    const cid = t.category_id as string
+    const prev = spentByCategory.get(cid) ?? 0
+    spentByCategory.set(cid, prev + Number(t.amount))
   }
 
   const byCard = new Map<string, BudgetLinkedToCardRow[]>()
@@ -282,8 +261,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
       | null
       | undefined
     if (!cat?.id) continue
-    const monthStart = String(b.month_start).slice(0, 10)
-    const spent = spentByCategoryMonth.get(spendKey(cat.id, monthStart)) ?? 0
+    const spent = spentByCategory.get(cat.id) ?? 0
     const row: BudgetLinkedToCardRow = {
       budgetId: b.id as string,
       categoryId: cat.id,
@@ -301,10 +279,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
   }
 
   for (const list of byCard.values()) {
-    list.sort(
-      (a, b) =>
-        b.monthStart.localeCompare(a.monthStart) || a.categoryName.localeCompare(b.categoryName, "es")
-    )
+    list.sort((a, b) => a.categoryName.localeCompare(b.categoryName, "es"))
   }
 
   return cards.map((card) => {

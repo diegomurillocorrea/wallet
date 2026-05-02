@@ -32,7 +32,7 @@ export default async function BudgetsPage() {
           Presupuestos
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Límites por categoría · {monthLabel(monthStart)}
+          Límites recurrentes por categoría · avance según {monthLabel(monthStart)} (mismo mes que Resumen)
         </p>
       </header>
 

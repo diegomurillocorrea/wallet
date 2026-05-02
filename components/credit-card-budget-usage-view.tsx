@@ -52,12 +52,14 @@ export const CreditCardBudgetUsageView = ({ groups }: CreditCardBudgetUsageViewP
             {budgets.length > 0 ? (
               <div className="shrink-0 text-right">
                 <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Gastado acumulado
+                  Gastado este mes
                 </p>
                 <p className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                   {formatMoney(totalSpentOnCard)}
                 </p>
-                <p className="text-xs text-zinc-500 dark:text-zinc-400">Suma de tus movimientos en esas categorías</p>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Mismo mes que en Resumen · suma de movimientos en esas categorías
+                </p>
               </div>
             ) : null}
           </div>
@@ -93,7 +95,7 @@ export const CreditCardBudgetUsageView = ({ groups }: CreditCardBudgetUsageViewP
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{b.categoryName}</p>
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                        {monthLabel(b.monthStart)} · día de pago {b.paymentDay}
+                        Gasto en {monthLabel(b.monthStart)} · día de pago {b.paymentDay}
                       </p>
                       <p className="mt-1 text-xs tabular-nums text-zinc-700 dark:text-zinc-200">
                         <span className="font-medium text-zinc-900 dark:text-zinc-100">

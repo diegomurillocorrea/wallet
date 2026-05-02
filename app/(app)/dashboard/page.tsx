@@ -51,18 +51,6 @@ export default async function DashboardPage() {
 
   const categories = (categoriesData ?? []) as CategoryRow[]
 
-  const { data: allTx } = await supabase
-    .from("transactions")
-    .select("amount, kind")
-    .eq("user_id", user.id)
-
-  let balance = 0
-  for (const t of allTx ?? []) {
-    const amt = Number(t.amount)
-    if (t.kind === "income") balance += amt
-    else balance -= amt
-  }
-
   const { data: monthTxData } = await supabase
     .from("transactions")
     .select(
@@ -96,6 +84,8 @@ export default async function DashboardPage() {
     prev.value += amt
     expenseByCat.set(key, prev)
   }
+
+  const monthBalance = monthIncome - monthExpense
 
   const pieData = [...expenseByCat.values()].map((c) => ({
     name: c.name,
@@ -146,12 +136,12 @@ export default async function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2 lg:col-span-1">
             <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Balance total
+              Balance del mes
             </p>
             <p
-              className={`mt-2 text-3xl font-semibold tabular-nums ${balance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
+              className={`mt-2 text-3xl font-semibold tabular-nums ${monthBalance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
             >
-              {formatMoney(balance)}
+              {formatMoney(monthBalance)}
             </p>
           </MotionStatCard>
           <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
@@ -211,7 +201,6 @@ export default async function DashboardPage() {
                             categoryId: a.categoryId,
                             categoryName: a.categoryName,
                             limit: a.limit,
-                            monthStart: a.monthStart,
                             paymentDay: a.paymentDay,
                             creditCardId: a.creditCardId,
                           }}

@@ -5,7 +5,7 @@ import Link from "next/link"
 import { useActionState, useCallback, useEffect, useId, useRef, useState } from "react"
 import { updateBudget, type ActionResult } from "@/app/(app)/actions/wallet-actions"
 import { holderShortFromCard } from "@/lib/credit-card/format"
-import { paymentDateDefaultForMonth } from "@/lib/dates/month"
+import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
 import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
 
 const creditOptionLabel = (c: CreditCardListItem): string =>
@@ -78,22 +78,6 @@ const EditBudgetFormInner = ({ budget, expenseCategories, creditCards, onSaved }
       </div>
       <div>
         <label
-          htmlFor={`${formId}-month`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Mes (primer día)
-        </label>
-        <input
-          id={`${formId}-month`}
-          name="monthStart"
-          type="date"
-          required
-          defaultValue={budget.monthStart.slice(0, 10)}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label
           htmlFor={`${formId}-pay`}
           className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
         >
@@ -104,7 +88,7 @@ const EditBudgetFormInner = ({ budget, expenseCategories, creditCards, onSaved }
           name="paymentDate"
           type="date"
           required
-          defaultValue={paymentDateDefaultForMonth(budget.monthStart, budget.paymentDay)}
+          defaultValue={paymentDateDefaultForMonth(monthStartIso(new Date()), budget.paymentDay)}
           className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
       </div>
@@ -201,8 +185,7 @@ export const EditBudgetDialog = ({ expenseCategories, creditCards, budget }: Edi
             Editar presupuesto
           </h2>
           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Podés cambiar categoría, mes, límite y día de pago. Si movés el mes, este ítem puede dejar de verse en
-            &quot;Estado del mes&quot; actual.
+            Podés cambiar categoría, límite y día de pago. El avance se ve según el mes elegido en Resumen.
           </p>
         </div>
         <EditBudgetFormInner

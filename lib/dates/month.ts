@@ -11,6 +11,9 @@ import { es } from "date-fns/locale"
 
 export const monthStartIso = (d: Date) => format(startOfMonth(d), "yyyy-MM-dd")
 
+/** Fila única `budgets.month_start` (NOT NULL en BD). El límite es por categoría; el gasto se mide con el mes de contexto. */
+export const BUDGET_DB_MONTH_ANCHOR = "2000-01-01"
+
 export const monthLabel = (monthStart: string) =>
   format(parseISO(monthStart), "MMMM yyyy", { locale: es })
 
