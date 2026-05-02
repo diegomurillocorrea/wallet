@@ -7,7 +7,9 @@ import { EditBudgetDialog } from "@/components/edit-budget-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { MotionStatCard } from "@/components/motion-stat-card"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
-import { currentMonthRange, monthLabel } from "@/lib/dates/month"
+import { monthLabel } from "@/lib/dates/month"
+import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
+import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { formatMoney } from "@/lib/format/money"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
@@ -39,7 +41,7 @@ export default async function DashboardPage() {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { start, end, monthStart } = currentMonthRange()
+  const { start, end, monthStart } = await getWalletAppMonthRange()
 
   const { data: categoriesData } = await supabase
     .from("categories")
@@ -114,6 +116,8 @@ export default async function DashboardPage() {
     `
     )
     .eq("user_id", user.id)
+    .gte("occurred_at", start)
+    .lte("occurred_at", end)
     .order("occurred_at", { ascending: false })
     .limit(8)
 
@@ -124,13 +128,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Resumen
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          {monthLabel(monthStart)} · balance y movimientos del mes
-        </p>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+            Resumen
+          </h1>
+          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+            {monthLabel(monthStart)} · balance y movimientos del mes en contexto
+          </p>
+        </div>
+        <WalletAppMonthSelect monthStart={monthStart} />
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -294,11 +301,11 @@ export default async function DashboardPage() {
           id="recent-heading"
           className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
         >
-          Últimos movimientos
+          Movimientos del mes
         </h2>
         {recent.length === 0 ? (
           <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
-            Todavía no hay movimientos. Registrá un gasto o ingreso arriba.
+            No hay movimientos en {monthLabel(monthStart)}. Registrá un gasto o ingreso arriba o cambiá el mes.
           </p>
         ) : (
           <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">

@@ -1,15 +1,16 @@
 "use server"
 
 import { revalidatePath } from "next/cache"
+import { cookies } from "next/headers"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
 import type { BudgetAlertRow } from "@/lib/types/wallet"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
 import {
-  currentMonthRange,
   normalizeMonthStartInput,
   parsePaymentDayFromDateInput,
 } from "@/lib/dates/month"
+import { getWalletAppMonthRange, WALLET_APP_MONTH_COOKIE } from "@/lib/dates/wallet-app-month"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
 import { formatExpMmYy, holderShortFromCard, panLast4 } from "@/lib/credit-card/format"
 
@@ -492,7 +493,7 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
   } = await supabase.auth.getUser()
   if (!user) return []
 
-  const { start, end, monthStart } = currentMonthRange()
+  const { start, end, monthStart } = await getWalletAppMonthRange()
 
   const { data: budgets } = await supabase
     .from("budgets")
@@ -600,4 +601,22 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
       },
     ]
   })
+}
+
+/** Persiste el mes de contexto global (cookie) y refresca vistas que lo usan */
+export async function setWalletAppMonth(monthStartIso: string): Promise<void> {
+  const trimmed = monthStartIso.trim()
+  const padded = trimmed.length === 7 ? `${trimmed}-01` : trimmed.slice(0, 10)
+  const normalized = normalizeMonthStartInput(padded)
+  const jar = await cookies()
+  jar.set(WALLET_APP_MONTH_COOKIE, normalized, {
+    path: "/",
+    maxAge: 60 * 60 * 24 * 400,
+    sameSite: "lax",
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+  })
+  revalidatePath("/dashboard")
+  revalidatePath("/budgets")
+  revalidatePath("/transactions")
 }

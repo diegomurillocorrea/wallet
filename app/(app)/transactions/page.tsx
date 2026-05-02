@@ -1,6 +1,8 @@
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
+import { monthLabel } from "@/lib/dates/month"
+import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { formatMoney } from "@/lib/format/money"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
@@ -33,6 +35,8 @@ export default async function TransactionsPage() {
 
   const categories = (categoriesData ?? []) as CategoryRow[]
 
+  const { start, end, monthStart } = await getWalletAppMonthRange()
+
   const { data: txData } = await supabase
     .from("transactions")
     .select(
@@ -46,6 +50,8 @@ export default async function TransactionsPage() {
     `
     )
     .eq("user_id", user.id)
+    .gte("occurred_at", start)
+    .lte("occurred_at", end)
     .order("occurred_at", { ascending: false })
     .limit(200)
 
@@ -58,7 +64,7 @@ export default async function TransactionsPage() {
           Movimientos
         </h1>
         <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-          Historial y registro rápido.
+          Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen). Registro rápido abajo.
         </p>
       </header>
 
