@@ -20,6 +20,14 @@ interface TxRow {
   } | null
 }
 
+interface TxGroup {
+  key: string
+  name: string
+  color: string | null
+  icon: string | null
+  items: TxRow[]
+}
+
 export default async function TransactionsPage() {
   const supabase = await createClient()
   const {
@@ -57,6 +65,30 @@ export default async function TransactionsPage() {
 
   const rows = (txData ?? []) as unknown as TxRow[]
 
+  const NO_CATEGORY_KEY = "__sin-categoria__"
+  const groupsMap = new Map<string, TxGroup>()
+  for (const t of rows) {
+    const key = t.category?.name ?? NO_CATEGORY_KEY
+    const existing = groupsMap.get(key)
+    if (existing) {
+      existing.items.push(t)
+      continue
+    }
+    groupsMap.set(key, {
+      key,
+      name: t.category?.name ?? "Sin categoría",
+      color: t.category?.color ?? null,
+      icon: t.category?.icon ?? null,
+      items: [t],
+    })
+  }
+
+  const groups = Array.from(groupsMap.values())
+  for (const group of groups) {
+    group.items.sort((a, b) => a.occurred_at.localeCompare(b.occurred_at))
+  }
+  groups.sort((a, b) => a.name.localeCompare(b.name))
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -82,42 +114,52 @@ export default async function TransactionsPage() {
             No hay movimientos todavía.
           </p>
         ) : (
-          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
-            {rows.map((t) => {
-              const cat = t.category
-              const isIncome = t.kind === "income"
-              return (
-                <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
-                  {cat ? (
+          <div className="mt-4 flex flex-col gap-6">
+            {groups.map((group) => (
+              <div key={group.key}>
+                <div className="flex items-center gap-2">
+                  {group.icon ? (
                     <span
-                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
-                      style={{ color: cat.color }}
+                      className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                      style={{ color: group.color ?? undefined }}
                     >
-                      <CategoryIcon name={cat.icon} className="size-5" />
+                      <CategoryIcon name={group.icon} className="size-4" />
                     </span>
                   ) : (
-                    <span className="size-10 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
+                    <span className="size-7 shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
                   )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {cat?.name ?? "Sin categoría"}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {t.occurred_at}
-                      {t.note ? ` · ${t.note}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
-                  >
-                    {isIncome ? "+" : "-"}
-                    {formatMoney(Number(t.amount))}
+                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                    {group.name}
+                  </h3>
+                  <span className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
+                    {group.items.length}
                   </span>
-                  <DeleteTransactionButton id={t.id} />
-                </li>
-              )
-            })}
-          </ul>
+                </div>
+                <ul className="mt-2 divide-y divide-zinc-100 dark:divide-zinc-800">
+                  {group.items.map((t) => {
+                    const isIncome = t.kind === "income"
+                    return (
+                      <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {t.occurred_at}
+                            {t.note ? ` · ${t.note}` : ""}
+                          </p>
+                        </div>
+                        <span
+                          className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
+                        >
+                          {isIncome ? "+" : "-"}
+                          {formatMoney(Number(t.amount))}
+                        </span>
+                        <DeleteTransactionButton id={t.id} />
+                      </li>
+                    )
+                  })}
+                </ul>
+              </div>
+            ))}
+          </div>
         )}
       </section>
     </div>

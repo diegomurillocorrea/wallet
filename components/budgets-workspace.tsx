@@ -28,6 +28,16 @@ export const BudgetsWorkspace = ({
 
   const totalBudgeted = budgets.reduce((sum, b) => sum + b.limit, 0)
 
+  const sortedBudgets = [...budgets].sort((a, b) => {
+    if (a.paymentDay !== b.paymentDay) return a.paymentDay - b.paymentDay
+    const aCard = a.card?.last4 ?? ""
+    const bCard = b.card?.last4 ?? ""
+    if (aCard === bCard) return a.categoryName.localeCompare(b.categoryName)
+    if (!aCard) return 1
+    if (!bCard) return -1
+    return aCard.localeCompare(bCard)
+  })
+
   const handleCancelEdit = useCallback(() => {
     setEditTarget(null)
   }, [])
@@ -87,7 +97,7 @@ export const BudgetsWorkspace = ({
               </p>
             </div>
             <ul className="mt-4 flex flex-col gap-4">
-            {budgets.map((b) => {
+            {sortedBudgets.map((b) => {
               const isRowEditing = editTarget?.budgetId === b.budgetId
               return (
                 <li

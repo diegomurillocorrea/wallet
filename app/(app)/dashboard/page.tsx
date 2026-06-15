@@ -120,6 +120,15 @@ export default async function DashboardPage() {
   const recent = (recentData ?? []) as unknown as RecentRow[]
 
   const [alerts, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
+  const sortedAlerts = [...alerts].sort((a, b) => {
+    if (a.paymentDay !== b.paymentDay) return a.paymentDay - b.paymentDay
+    const aCard = a.card?.last4 ?? ""
+    const bCard = b.card?.last4 ?? ""
+    if (aCard === bCard) return a.categoryName.localeCompare(b.categoryName)
+    if (!aCard) return 1
+    if (!bCard) return -1
+    return aCard.localeCompare(bCard)
+  })
   const expenseCategories = categories.filter((c) => c.kind === "expense")
 
   return (
@@ -181,7 +190,7 @@ export default async function DashboardPage() {
             Presupuestos del mes
           </h2>
           <ul className="mt-4 flex flex-col gap-3">
-            {alerts.map((a) => (
+            {sortedAlerts.map((a) => (
               <li key={a.budgetId}>
                 <div className="flex items-center gap-3">
                   <span
@@ -239,7 +248,7 @@ export default async function DashboardPage() {
                     >
                       <div
                         className={`h-full rounded-full transition-all ${
-                          a.level === "over"
+                          a.level === "over" && a.spent !== a.limit
                             ? "bg-red-500"
                             : a.level === "warn"
                               ? "bg-amber-500"
@@ -249,9 +258,15 @@ export default async function DashboardPage() {
                       />
                     </div>
                     {a.level === "over" ? (
-                      <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-                        Pasaste el límite de presupuesto.
-                      </p>
+                      a.spent === a.limit ? (
+                        <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                          Gastaste lo justo de tu presupuesto.
+                        </p>
+                      ) : (
+                        <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
+                          Pasaste el límite de presupuesto.
+                        </p>
+                      )
                     ) : null}
                     {a.level === "warn" ? (
                       <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
