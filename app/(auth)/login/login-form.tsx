@@ -4,10 +4,14 @@ import { Suspense, useState } from "react"
 import { motion } from "framer-motion"
 import { useRouter, useSearchParams } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { useTheme } from "@/hooks/use-theme"
 import { Footer } from "@/components/footer"
 import { DaiegoLogo } from "@/components/daiego-logo"
 import { GoogleAuthButton } from "@/components/google-auth-button"
+import { ThemeToggle } from "@/components/theme-toggle"
+import { Button } from "@/components/ui/button"
+import { Checkbox, CheckboxField } from "@/components/ui/checkbox"
+import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Input } from "@/components/ui/input"
 
 function safeDecodeURIComponent(value: string) {
   try {
@@ -61,11 +65,6 @@ export function LoginForm() {
     router.push(redirectTo)
   }
 
-  const inputClass =
-    "w-full rounded-xl border border-zinc-300 bg-white px-4 py-3 text-zinc-900 placeholder-zinc-400 transition-all duration-200 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500 dark:focus:border-emerald-400 dark:focus:ring-emerald-500/30"
-
-  const { theme, toggleTheme } = useTheme()
-
   return (
     <div className="relative flex min-h-screen flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">
       <div
@@ -77,33 +76,9 @@ export function LoginForm() {
         <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-amber-300/15 blur-3xl dark:bg-amber-400/10" />
       </div>
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8">
-        <button
-          type="button"
-          onClick={toggleTheme}
-          className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-xl text-zinc-600 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:ring-offset-2 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:focus:ring-offset-zinc-950"
-          aria-label={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
-          tabIndex={0}
-        >
-          {theme === "light" ? (
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-              />
-            </svg>
-          ) : (
-            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-              />
-            </svg>
-          )}
-        </button>
+        <div className="absolute right-4 top-4">
+          <ThemeToggle />
+        </div>
         <motion.main
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
@@ -143,14 +118,9 @@ export function LoginForm() {
           </div>
 
           <form onSubmit={handleSubmit} className="mt-6 flex flex-col gap-5">
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Email
-              </label>
-              <input
+            <Field>
+              <Label>Email</Label>
+              <Input
                 id="email"
                 type="email"
                 autoComplete="email"
@@ -159,20 +129,14 @@ export function LoginForm() {
                 placeholder="tu@ejemplo.com"
                 required
                 disabled={isLoading}
-                className={inputClass}
                 aria-label="Dirección de correo electrónico"
-                aria-invalid={Boolean(displayError)}
+                invalid={Boolean(displayError)}
               />
-            </div>
+            </Field>
 
-            <div>
-              <label
-                htmlFor="password"
-                className="mb-1.5 block text-sm font-medium text-zinc-700 dark:text-zinc-300"
-              >
-                Contraseña
-              </label>
-              <input
+            <Field>
+              <Label>Contraseña</Label>
+              <Input
                 id="password"
                 type={showPassword ? "text" : "password"}
                 autoComplete={isRecovery ? "new-password" : "current-password"}
@@ -181,37 +145,22 @@ export function LoginForm() {
                 placeholder="••••••••"
                 required
                 disabled={isLoading}
-                className={inputClass}
                 aria-label="Contraseña"
-                aria-invalid={Boolean(displayError)}
+                invalid={Boolean(displayError)}
               />
-              <div className="mt-2 flex items-center">
-                <input
-                  id="show-password"
-                  type="checkbox"
+              <CheckboxField className="mt-3">
+                <Checkbox
+                  color="emerald"
                   checked={showPassword}
-                  onChange={(e) => setShowPassword(e.target.checked)}
+                  onChange={setShowPassword}
                   disabled={isLoading}
-                  className="h-4 w-4 rounded border-zinc-300 accent-emerald-600 transition-colors focus:ring-2 focus:ring-emerald-500/20 focus:ring-offset-2 disabled:opacity-50 dark:border-zinc-600 dark:accent-emerald-500 dark:focus:ring-emerald-500/30 dark:focus:ring-offset-zinc-900"
-                  aria-label="Mostrar contraseña"
+                  name="show-password"
                 />
-                <label
-                  htmlFor="show-password"
-                  className="ml-2 text-sm text-zinc-600 dark:text-zinc-400"
-                >
-                  Mostrar contraseña
-                </label>
-              </div>
-            </div>
+                <Label>Mostrar contraseña</Label>
+              </CheckboxField>
+            </Field>
 
-            {displayError ? (
-              <div
-                role="alert"
-                className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-950/50 dark:text-red-300"
-              >
-                {displayError}
-              </div>
-            ) : null}
+            {displayError ? <ErrorMessage>{displayError}</ErrorMessage> : null}
 
             {message ? (
               <div
@@ -222,15 +171,16 @@ export function LoginForm() {
               </div>
             ) : null}
 
-            <button
+            <Button
               type="submit"
+              color="emerald"
               disabled={isLoading}
-              className="flex h-12 w-full items-center justify-center rounded-xl bg-emerald-600 font-medium text-white transition-all duration-200 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 disabled:opacity-50 dark:bg-emerald-500 dark:hover:bg-emerald-600 dark:focus:ring-offset-zinc-900"
+              className="w-full"
               aria-busy={isLoading}
               aria-label="Iniciar sesión"
             >
               {isLoading ? "Iniciando sesión…" : "Iniciar sesión"}
-            </button>
+            </Button>
           </form>
         </motion.main>
       </div>

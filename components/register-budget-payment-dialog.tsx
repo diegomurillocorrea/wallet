@@ -1,127 +1,239 @@
 "use client"
 
-import { Banknote } from "lucide-react"
+import { BanknotesIcon } from "@heroicons/react/16/solid"
 import { useRouter } from "next/navigation"
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from "react"
+import { useActionState, useCallback, useEffect, useId, useMemo, useState, type ChangeEvent } from "react"
 import { addTransaction, type ActionResult } from "@/app/(app)/actions/wallet-actions"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Input } from "@/components/ui/input"
+import { clampIsoDateToRange } from "@/lib/dates/month"
+import { todayInElSalvador } from "@/lib/dates/el-salvador"
+import { formatMoney } from "@/lib/format/money"
+
+type PaymentMode = "full" | "custom"
+
+interface PaymentModeToggleProps {
+  canPayFull: boolean
+  value: PaymentMode
+  onChange: (mode: PaymentMode) => void
+}
+
+const PaymentModeToggle = ({ canPayFull, value, onChange }: PaymentModeToggleProps) => {
+  const handleSelectFull = () => {
+    if (!canPayFull) return
+    onChange("full")
+  }
+
+  const handleSelectCustom = () => {
+    onChange("custom")
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Tipo de pago">
+      {value === "custom" ? (
+        <Button
+          type="button"
+          role="tab"
+          aria-selected
+          color="emerald"
+          onClick={handleSelectCustom}
+          className="w-full"
+        >
+          Personalizado
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          role="tab"
+          aria-selected={false}
+          outline
+          onClick={handleSelectCustom}
+          className="w-full"
+        >
+          Personalizado
+        </Button>
+      )}
+      {value === "full" ? (
+        <Button
+          type="button"
+          role="tab"
+          aria-selected
+          color="emerald"
+          disabled={!canPayFull}
+          onClick={handleSelectFull}
+          className="w-full"
+        >
+          Completo
+        </Button>
+      ) : (
+        <Button
+          type="button"
+          role="tab"
+          aria-selected={false}
+          outline
+          disabled={!canPayFull}
+          onClick={handleSelectFull}
+          className="w-full"
+        >
+          Completo
+        </Button>
+      )}
+    </div>
+  )
+}
 
 interface RegisterBudgetPaymentFormInnerProps {
   categoryId: string
-  categoryName: string
-  defaultOccurredAt: string
+  defaultAmount: number
+  monthStart: string
+  monthEnd: string
+  formId: string
+  onClose: () => void
   onSaved: () => void
 }
 
 const RegisterBudgetPaymentFormInner = ({
   categoryId,
-  categoryName,
-  defaultOccurredAt,
+  defaultAmount,
+  monthStart,
+  monthEnd,
+  formId,
+  onClose,
   onSaved,
 }: RegisterBudgetPaymentFormInnerProps) => {
+  const canPayFull = defaultAmount > 0
+  const [mode, setMode] = useState<PaymentMode>("custom")
+  const [customAmount, setCustomAmount] = useState("")
+  const defaultOccurredAt = useMemo(
+    () => clampIsoDateToRange(todayInElSalvador(), monthStart, monthEnd),
+    [monthStart, monthEnd]
+  )
+  const fullAmount = canPayFull ? defaultAmount.toFixed(2) : ""
+  const amountValue = mode === "full" ? fullAmount : customAmount
+
   const [state, formAction, pending] = useActionState(
     async (_: ActionResult | undefined, fd: FormData) => addTransaction(fd),
     undefined as ActionResult | undefined
   )
-  const formId = useId()
 
   useEffect(() => {
     if (!state?.success) return
     onSaved()
   }, [state?.success, onSaved])
 
+  const handleSelectMode = (next: PaymentMode) => {
+    setMode(next)
+  }
+
+  const handleCustomAmountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setCustomAmount(event.target.value)
+  }
+
   return (
-    <form id={formId} action={formAction} className="flex flex-col gap-3 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
-      <input type="hidden" name="kind" value="expense" />
-      <input type="hidden" name="categoryId" value={categoryId} />
-      <p className="text-xs text-zinc-500 dark:text-zinc-400">
-        Se registrará un <span className="font-medium text-zinc-700 dark:text-zinc-300">gasto</span> en{" "}
-        <span className="font-medium text-zinc-800 dark:text-zinc-200">{categoryName}</span>.
-      </p>
-      <div>
-        <label htmlFor={`${formId}-amount`} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Monto
-        </label>
-        <input
-          id={`${formId}-amount`}
-          name="amount"
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.01"
-          required
-          placeholder="0.00"
-          autoComplete="transaction-amount"
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${formId}-note`} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Nota (opcional)
-        </label>
-        <input
-          id={`${formId}-note`}
-          name="note"
-          type="text"
-          maxLength={500}
-          placeholder="Ej. factura, comercio…"
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${formId}-date`} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Fecha del gasto
-        </label>
-        <input
-          id={`${formId}-date`}
-          name="occurredAt"
-          type="date"
-          required
-          defaultValue={defaultOccurredAt}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      {state?.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {state.error}
-        </p>
-      ) : null}
-      {state?.success ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          Pago registrado.
-        </p>
-      ) : null}
-      <div className="mt-1 flex flex-wrap gap-2">
-        <button
+    <>
+      <form id={formId} action={formAction} className="flex flex-col gap-4">
+        <input type="hidden" name="kind" value="expense" />
+        <input type="hidden" name="categoryId" value={categoryId} />
+        <input type="hidden" name="constrainToAppMonth" value="1" />
+        <PaymentModeToggle canPayFull={canPayFull} value={mode} onChange={handleSelectMode} />
+        <Field>
+          <Label>Monto</Label>
+          {mode === "full" ? (
+            <>
+              <p
+                data-slot="control"
+                className="text-lg font-semibold tabular-nums text-zinc-950 dark:text-white"
+              >
+                {formatMoney(defaultAmount)}
+              </p>
+              <input type="hidden" name="amount" value={fullAmount} />
+            </>
+          ) : (
+            <Input
+              id={`${formId}-amount`}
+              name="amount"
+              type="number"
+              inputMode="decimal"
+              min="0.01"
+              step="0.01"
+              required
+              value={customAmount}
+              onChange={handleCustomAmountChange}
+              placeholder="0.00"
+              autoComplete="transaction-amount"
+            />
+          )}
+        </Field>
+        <Field>
+          <Label>Nota (opcional)</Label>
+          <Input
+            id={`${formId}-note`}
+            name="note"
+            type="text"
+            maxLength={500}
+            placeholder="Ej. factura, comercio…"
+          />
+        </Field>
+        <Field>
+          <Label>Fecha</Label>
+          <Input
+            id={`${formId}-date`}
+            name="occurredAt"
+            type="date"
+            required
+            min={monthStart}
+            max={monthEnd}
+            defaultValue={defaultOccurredAt}
+          />
+        </Field>
+        {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
+      </form>
+      <DialogActions>
+        <Button type="button" plain onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
           type="submit"
           form={formId}
-          disabled={pending}
-          className="min-h-11 flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+          color="emerald"
+          disabled={pending || amountValue === ""}
         >
-          {pending ? "Guardando…" : "Registrar pago"}
-        </button>
-      </div>
-    </form>
+          {pending ? "Guardando…" : mode === "full" ? "Pagar completo" : "Registrar pago"}
+        </Button>
+      </DialogActions>
+    </>
   )
 }
 
 export interface RegisterBudgetPaymentDialogProps {
   categoryId: string
   categoryName: string
-  defaultOccurredAt: string
+  defaultAmount: number
+  monthStart: string
+  monthEnd: string
 }
 
 export const RegisterBudgetPaymentDialog = ({
   categoryId,
   categoryName,
-  defaultOccurredAt,
+  defaultAmount,
+  monthStart,
+  monthEnd,
 }: RegisterBudgetPaymentDialogProps) => {
   const router = useRouter()
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const titleId = useId()
+  const formId = useId()
+  const [open, setOpen] = useState(false)
   const [formNonce, setFormNonce] = useState(0)
 
   const handleCloseDialog = useCallback(() => {
-    dialogRef.current?.close()
+    setOpen(false)
   }, [])
 
   const handleSaved = useCallback(() => {
@@ -131,50 +243,40 @@ export const RegisterBudgetPaymentDialog = ({
 
   const handleClickOpen = () => {
     setFormNonce((n) => n + 1)
-    dialogRef.current?.showModal()
+    setOpen(true)
   }
 
   return (
     <>
-      <button
+      <Button
+        plain
         type="button"
         onClick={handleClickOpen}
-        className="inline-flex size-10 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
-        aria-label={`Registrar pago para ${categoryName}`}
+        aria-label={`Pagar ${categoryName}`}
         aria-haspopup="dialog"
       >
-        <Banknote className="size-4" aria-hidden />
-      </button>
-      <dialog
-        ref={dialogRef}
-        className="fixed left-1/2 top-1/2 z-50 max-h-[min(90dvh,100%)] w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-xl backdrop:bg-black/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
-        aria-labelledby={titleId}
-      >
-        <div className="flex flex-col gap-1 border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 sm:px-6">
-          <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            Registrar pago
-          </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            El gasto cuenta para el mes que elegiste en Resumen (fecha del movimiento).
-          </p>
-        </div>
-        <RegisterBudgetPaymentFormInner
-          key={formNonce}
-          categoryId={categoryId}
-          categoryName={categoryName}
-          defaultOccurredAt={defaultOccurredAt}
-          onSaved={handleSaved}
-        />
-        <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-6">
-          <button
-            type="button"
-            onClick={handleCloseDialog}
-            className="w-full min-h-11 rounded-xl border border-zinc-200 bg-white py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-        </div>
-      </dialog>
+        <BanknotesIcon />
+      </Button>
+      <Dialog open={open} onClose={handleCloseDialog} size="md">
+        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+          Registrar pago
+        </p>
+        <DialogTitle className="mt-1 text-2xl/8 font-semibold sm:text-xl/8">
+          {categoryName}
+        </DialogTitle>
+        <DialogBody>
+          <RegisterBudgetPaymentFormInner
+            key={formNonce}
+            categoryId={categoryId}
+            defaultAmount={defaultAmount}
+            monthStart={monthStart}
+            monthEnd={monthEnd}
+            formId={formId}
+            onClose={handleCloseDialog}
+            onSaved={handleSaved}
+          />
+        </DialogBody>
+      </Dialog>
     </>
   )
 }

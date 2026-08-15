@@ -1,12 +1,17 @@
 "use client"
 
 import { useActionState, useEffect, useId, useMemo } from "react"
-import Link from "next/link"
 import {
   updateBudget,
   upsertBudget,
   type ActionResult,
 } from "@/app/(app)/actions/wallet-actions"
+import { Button } from "@/components/ui/button"
+import { Description, ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import { Subheading } from "@/components/ui/heading"
+import { Text, TextLink } from "@/components/ui/text"
 import { holderShortFromCard } from "@/lib/credit-card/format"
 import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
 import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
@@ -67,32 +72,26 @@ export const BudgetForm = ({
       className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
     >
       {isEdit ? <input type="hidden" name="budgetId" value={editTarget.budgetId} /> : null}
-      <h2 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+      <Subheading level={2}>
         {isEdit ? "Actualizar presupuesto" : "Definir o actualizar presupuesto"}
-      </h2>
+      </Subheading>
       {isEdit ? (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <Text>
           Estás editando <span className="font-medium text-zinc-700 dark:text-zinc-300">{editTarget.categoryName}</span>.
           El límite aplica todos los meses; el avance se compara con el mes elegido en Resumen.
-        </p>
+        </Text>
       ) : (
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
+        <Text>
           Límite recurrente por categoría de gasto. Si ya existe para esa categoría, se actualiza.
-        </p>
+        </Text>
       )}
-      <div>
-        <label
-          htmlFor={`${formId}-budget-cat`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Categoría
-        </label>
-        <select
+      <Field>
+        <Label>Categoría</Label>
+        <Select
           id={`${formId}-budget-cat`}
           name="categoryId"
           required
           defaultValue={isEdit ? editTarget.categoryId : undefined}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         >
           {!isEdit ? <option value="">Elegí categoría de gasto</option> : null}
           {expenseCategories.map((c) => (
@@ -100,16 +99,11 @@ export const BudgetForm = ({
               {c.name}
             </option>
           ))}
-        </select>
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-budget-limit`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Límite (USD)
-        </label>
-        <input
+        </Select>
+      </Field>
+      <Field>
+        <Label>Límite (USD)</Label>
+        <Input
           id={`${formId}-budget-limit`}
           name="amountLimit"
           type="number"
@@ -118,54 +112,34 @@ export const BudgetForm = ({
           step="0.01"
           required
           defaultValue={isEdit ? editTarget.limit : undefined}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-budget-payment-date`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Día de pago
-        </label>
-        <input
+      </Field>
+      <Field>
+        <Label>Día de pago</Label>
+        <Input
           id={`${formId}-budget-payment-date`}
           name="paymentDate"
           type="date"
           required
           defaultValue={defaultPaymentDate}
-          aria-describedby={`${formId}-budget-payment-date-hint`}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
         />
-        <p id={`${formId}-budget-payment-date-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <Description>
           Elegí una fecha: guardamos solo el día del mes (1 a 31) que cae en esa fecha.
-        </p>
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-budget-card`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Tarjeta (opcional)
-        </label>
+        </Description>
+      </Field>
+      <Field>
+        <Label>Tarjeta (opcional)</Label>
         {creditCards.length === 0 ? (
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          <Text>
             No tenés tarjetas registradas.{" "}
-            <Link
-              href="/credit-cards"
-              className="font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
-            >
-              Cargá una en Tarjetas
-            </Link>{" "}
+            <TextLink href="/credit-cards">Cargá una en Tarjetas</TextLink>{" "}
             para vincularla al débito mensual.
-          </p>
+          </Text>
         ) : (
-          <select
+          <Select
             id={`${formId}-budget-card`}
             name="creditCardId"
             defaultValue={isEdit && editTarget.creditCardId ? editTarget.creditCardId : ""}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-            aria-describedby={`${formId}-budget-card-hint`}
           >
             <option value="">Sin tarjeta</option>
             {creditCards.map((c) => (
@@ -173,38 +147,31 @@ export const BudgetForm = ({
                 {creditOptionLabel(c)}
               </option>
             ))}
-          </select>
+          </Select>
         )}
-        <p id={`${formId}-budget-card-hint`} className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+        <Description>
           Referencia para saber en qué plástico cae este presupuesto cada mes.
-        </p>
-      </div>
-      {state?.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {state.error}
-        </p>
-      ) : null}
+        </Description>
+      </Field>
+      {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
       {state?.success ? (
         <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
           {isEdit ? "Cambios guardados." : "Presupuesto guardado."}
         </p>
       ) : null}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-        <button
+        <Button
           type="submit"
+          color="emerald"
           disabled={pending || expenseCategories.length === 0}
-          className="min-h-11 flex-1 rounded-xl bg-emerald-600 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50"
+          className="w-full sm:flex-1"
         >
           {pending ? "Guardando…" : isEdit ? "Guardar cambios" : "Guardar presupuesto"}
-        </button>
+        </Button>
         {isEdit ? (
-          <button
-            type="button"
-            onClick={handleClickCancelEdit}
-            className="min-h-11 rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800 sm:shrink-0"
-          >
+          <Button type="button" outline onClick={handleClickCancelEdit}>
             Cancelar edición
-          </button>
+          </Button>
         ) : null}
       </div>
     </form>

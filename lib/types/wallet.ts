@@ -83,6 +83,14 @@ export interface BudgetEditTarget {
   creditCardId: string | null
 }
 
+/** Movimiento de gasto que suma al presupuesto de una categoría en el mes */
+export interface BudgetCategoryMovement {
+  id: string
+  amount: number
+  note: string | null
+  occurredAt: string
+}
+
 /** Fila de alerta / lista de presupuestos del mes (serializable servidor → cliente) */
 export interface BudgetAlertRow {
   budgetId: string
@@ -99,6 +107,7 @@ export interface BudgetAlertRow {
   paymentDay: number
   creditCardId: string | null
   card: BudgetCardSummary | null
+  movements: BudgetCategoryMovement[]
 }
 
 export interface TransactionWithCategory extends TransactionRow {

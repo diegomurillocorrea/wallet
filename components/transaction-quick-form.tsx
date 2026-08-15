@@ -2,8 +2,15 @@
 
 import { useActionState, useMemo, useState } from "react"
 import { addTransaction, type ActionResult } from "@/app/(app)/actions/wallet-actions"
-import type { CategoryRow } from "@/lib/types/wallet"
-import type { TransactionKind } from "@/lib/types/wallet"
+import { KindToggle } from "@/components/kind-toggle"
+import { Button } from "@/components/ui/button"
+import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import { Subheading } from "@/components/ui/heading"
+import { Text } from "@/components/ui/text"
+import { todayInElSalvador } from "@/lib/dates/el-salvador"
+import type { CategoryRow, TransactionKind } from "@/lib/types/wallet"
 
 interface TransactionQuickFormProps {
   categories: CategoryRow[]
@@ -21,75 +28,44 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
     [categories, kind]
   )
 
-  const today = useMemo(() => new Date().toISOString().slice(0, 10), [])
+  const today = useMemo(() => todayInElSalvador(), [])
 
   return (
     <section
       className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
       aria-labelledby="quick-add-heading"
     >
-      <h2 id="quick-add-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+      <Subheading id="quick-add-heading" level={2}>
         Registrar movimiento
-      </h2>
-      <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
-        Gasto o ingreso en pocos segundos.
-      </p>
+      </Subheading>
+      <Text className="mt-1">Gasto o ingreso en pocos segundos.</Text>
 
-      <div
-        className="mt-4 flex rounded-xl bg-zinc-100 p-1 dark:bg-zinc-800"
-        role="tablist"
-        aria-label="Tipo de movimiento"
-      >
-        {(
-          [
-            { k: "expense" as const, label: "Gasto" },
-            { k: "income" as const, label: "Ingreso" },
-          ] as const
-        ).map(({ k, label }) => (
-          <button
-            key={k}
-            type="button"
-            role="tab"
-            aria-selected={kind === k}
-            onClick={() => setKind(k)}
-            className={`flex-1 rounded-lg py-2.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 ${
-              kind === k
-                ? "bg-white text-emerald-800 shadow-sm dark:bg-zinc-950 dark:text-emerald-300"
-                : "text-zinc-600 dark:text-zinc-400"
-            }`}
-          >
-            {label}
-          </button>
-        ))}
+      <div className="mt-4">
+        <KindToggle
+          value={kind}
+          onChange={setKind}
+          label="Tipo de movimiento"
+        />
       </div>
 
       <form action={formAction} className="mt-4 flex flex-col gap-4">
         <input type="hidden" name="kind" value={kind} />
 
-        <div>
-          <label htmlFor="categoryId" className="sr-only">
-            Categoría
-          </label>
-          <select
-            id="categoryId"
-            name="categoryId"
-            required
-            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
-          >
+        <Field>
+          <Label className="sr-only">Categoría</Label>
+          <Select id="categoryId" name="categoryId" required>
             <option value="">Elegí categoría</option>
             {filtered.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
-          </select>
-        </div>
+          </Select>
+        </Field>
 
-        <div>
-          <label htmlFor="amount" className="sr-only">
-            Monto
-          </label>
-          <input
+        <Field>
+          <Label className="sr-only">Monto</Label>
+          <Input
             id="amount"
             name="amount"
             type="number"
@@ -98,55 +74,40 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             step="0.01"
             required
             placeholder="Monto"
-            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label htmlFor="note" className="sr-only">
-            Nota
-          </label>
-          <input
+        <Field>
+          <Label className="sr-only">Nota</Label>
+          <Input
             id="note"
             name="note"
             type="text"
             maxLength={500}
             placeholder="Nota (opcional)"
-            className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
-        </div>
+        </Field>
 
-        <div>
-          <label htmlFor="occurredAt" className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-            Fecha
-          </label>
-          <input
+        <Field>
+          <Label>Fecha</Label>
+          <Input
             id="occurredAt"
             name="occurredAt"
             type="date"
             defaultValue={today}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100"
           />
-        </div>
+        </Field>
 
-        {state?.error ? (
-          <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-            {state.error}
-          </p>
-        ) : null}
+        {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
         {state?.success ? (
           <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
             Movimiento guardado.
           </p>
         ) : null}
 
-        <button
-          type="submit"
-          disabled={pending || filtered.length === 0}
-          className="min-h-11 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
-        >
+        <Button type="submit" color="emerald" disabled={pending || filtered.length === 0} className="w-full">
           {pending ? "Guardando…" : "Guardar"}
-        </button>
+        </Button>
       </form>
     </section>
   )

@@ -2,6 +2,9 @@ import { AddCategoryForm } from "@/components/add-category-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteCategoryButton } from "@/components/delete-category-button"
 import { EditCategoryDialog } from "@/components/edit-category-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Heading, Subheading } from "@/components/ui/heading"
+import { Text } from "@/components/ui/text"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
 
@@ -24,13 +27,11 @@ export default async function CategoriesPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Categorías
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <Heading>Categorías</Heading>
+        <Text className="mt-1">
           Predefinidas al crear tu cuenta; podés agregar, editar o eliminar cualquiera. Los íconos son de Lucide:
           buscá por nombre o escribí la clave exacta.
-        </p>
+        </Text>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -40,9 +41,9 @@ export default async function CategoriesPage() {
           className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="cat-list-heading"
         >
-          <h2 id="cat-list-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+          <Subheading id="cat-list-heading" level={2}>
             Tus categorías
-          </h2>
+          </Subheading>
           <ul className="mt-4 flex flex-col gap-2">
             {categories.map((c) => (
               <li
@@ -59,9 +60,9 @@ export default async function CategoriesPage() {
                   <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
                     {c.name}
                   </p>
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <Badge color={c.kind === "income" ? "emerald" : "zinc"} className="mt-1">
                     {c.kind === "income" ? "Ingreso" : "Gasto"}
-                  </p>
+                  </Badge>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
                   <EditCategoryDialog category={c} />

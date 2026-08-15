@@ -13,6 +13,13 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    files: ["components/ui/**"],
+    rules: {
+      "@next/next/no-img-element": "off",
+      "prefer-const": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

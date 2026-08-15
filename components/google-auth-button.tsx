@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { createClient } from "@/lib/supabase/client"
 
 const sanitizeNextPath = (value: string | null | undefined) => {
@@ -11,7 +12,7 @@ const sanitizeNextPath = (value: string | null | undefined) => {
 }
 
 const GoogleGlyph = () => (
-  <svg className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
+  <svg data-slot="icon" className="h-5 w-5 shrink-0" viewBox="0 0 24 24" aria-hidden>
     <path
       fill="#4285F4"
       d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -81,16 +82,17 @@ export function GoogleAuthButton({
     variant === "signup" ? "Registrarse con Google" : "Continuar con Google"
 
   return (
-    <button
+    <Button
       type="button"
+      outline
       onClick={handleGoogleClick}
       disabled={disabled || isLoading}
       aria-busy={isLoading}
       aria-label={label}
-      className="flex h-12 w-full items-center justify-center gap-3 rounded-xl border border-zinc-200 bg-white px-4 text-sm font-semibold text-zinc-800 shadow-sm transition-all duration-200 hover:border-zinc-300 hover:bg-zinc-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-600 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:border-zinc-500 dark:hover:bg-zinc-900 dark:focus:ring-emerald-400/40 dark:focus:ring-offset-zinc-900"
+      className="w-full"
     >
       <GoogleGlyph />
       {isLoading ? "Abriendo Google…" : label}
-    </button>
+    </Button>
   )
 }

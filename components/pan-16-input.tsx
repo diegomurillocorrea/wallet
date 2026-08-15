@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ChangeEvent } from "react"
+import { Input } from "@/components/ui/input"
 import { formatPanTyping } from "@/lib/credit-card/format"
 
 interface Pan16InputProps {
@@ -9,7 +10,6 @@ interface Pan16InputProps {
   initialValue?: string
   required?: boolean
   placeholder?: string
-  className?: string
   "aria-describedby"?: string
 }
 
@@ -19,7 +19,6 @@ export function Pan16Input({
   initialValue = "",
   required,
   placeholder = "0000 0000 0000 0000",
-  className,
   "aria-describedby": ariaDescribedBy,
 }: Pan16InputProps) {
   const [value, setValue] = useState(() => formatPanTyping(initialValue))
@@ -33,7 +32,7 @@ export function Pan16Input({
   }
 
   return (
-    <input
+    <Input
       id={id}
       name={name}
       type="text"
@@ -45,7 +44,6 @@ export function Pan16Input({
       maxLength={19}
       placeholder={placeholder}
       aria-describedby={ariaDescribedBy}
-      className={className}
     />
   )
 }

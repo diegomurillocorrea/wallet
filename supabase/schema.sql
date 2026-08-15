@@ -30,7 +30,7 @@ create table if not exists public.transactions (
   amount numeric(14, 2) not null check (amount > 0),
   kind text not null check (kind in ('expense', 'income')),
   note text,
-  occurred_at date not null default ((now() at time zone 'utc')::date),
+  occurred_at date not null default ((now() at time zone 'America/El_Salvador')::date),
   created_at timestamptz not null default now()
 );
 

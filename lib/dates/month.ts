@@ -8,6 +8,7 @@ import {
   subMonths,
 } from "date-fns"
 import { es } from "date-fns/locale"
+import { todayDateInElSalvador, todayInElSalvador } from "@/lib/dates/el-salvador"
 
 export const monthStartIso = (d: Date) => format(startOfMonth(d), "yyyy-MM-dd")
 
@@ -17,7 +18,7 @@ export const BUDGET_DB_MONTH_ANCHOR = "2000-01-01"
 export const monthLabel = (monthStart: string) =>
   format(parseISO(monthStart), "MMMM yyyy", { locale: es })
 
-export const currentMonthRange = (d = new Date()) => {
+export const currentMonthRange = (d = todayDateInElSalvador()) => {
   const start = startOfMonth(d)
   const end = endOfMonth(d)
   return {
@@ -37,14 +38,14 @@ export const clampIsoDateToRange = (candidate: string, rangeStart: string, range
   return c
 }
 
-export const previousMonthStart = (d = new Date()) =>
+export const previousMonthStart = (d = todayDateInElSalvador()) =>
   format(startOfMonth(subMonths(d, 1)), "yyyy-MM-dd")
 
 /** Normaliza cualquier fecha del mes al primer día (YYYY-MM-DD) para presupuestos */
 export const normalizeMonthStartInput = (input: string | undefined) => {
-  if (!input || input.length < 10) return monthStartIso(new Date())
+  if (!input || input.length < 10) return monthStartIso(todayDateInElSalvador())
   const d = parseISO(input.slice(0, 10))
-  if (Number.isNaN(d.getTime())) return monthStartIso(new Date())
+  if (Number.isNaN(d.getTime())) return monthStartIso(todayDateInElSalvador())
   return format(startOfMonth(d), "yyyy-MM-dd")
 }
 
@@ -59,7 +60,7 @@ export const parsePaymentDayFromDateInput = (input: string | undefined): number 
 /** `yyyy-MM-dd` para el date picker: mes del presupuesto + día de pago (acotado al mes) */
 export const paymentDateDefaultForMonth = (monthStartIsoStr: string, paymentDay: number) => {
   const base = parseISO(monthStartIsoStr.slice(0, 10))
-  if (Number.isNaN(base.getTime())) return format(new Date(), "yyyy-MM-dd")
+  if (Number.isNaN(base.getTime())) return todayInElSalvador()
   const dim = getDaysInMonth(base)
   const safe = Math.min(Math.max(1, paymentDay), dim)
   return format(setDate(base, safe), "yyyy-MM-dd")

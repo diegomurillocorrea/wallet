@@ -1,9 +1,20 @@
 "use client"
 
-import { Pencil } from "lucide-react"
-import Link from "next/link"
-import { useActionState, useCallback, useEffect, useId, useRef, useState } from "react"
+import { PencilIcon } from "@heroicons/react/16/solid"
+import { useActionState, useCallback, useEffect, useId, useState } from "react"
 import { updateBudget, type ActionResult } from "@/app/(app)/actions/wallet-actions"
+import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Input } from "@/components/ui/input"
+import { Select } from "@/components/ui/select"
+import { Text, TextLink } from "@/components/ui/text"
 import { holderShortFromCard } from "@/lib/credit-card/format"
 import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
 import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
@@ -18,15 +29,21 @@ interface EditBudgetFormInnerProps {
   budget: BudgetEditTarget
   expenseCategories: CategoryRow[]
   creditCards: CreditCardListItem[]
+  formId: string
   onSaved: () => void
 }
 
-const EditBudgetFormInner = ({ budget, expenseCategories, creditCards, onSaved }: EditBudgetFormInnerProps) => {
+const EditBudgetFormInner = ({
+  budget,
+  expenseCategories,
+  creditCards,
+  formId,
+  onSaved,
+}: EditBudgetFormInnerProps) => {
   const [state, formAction, pending] = useActionState(
     async (_: ActionResult | undefined, fd: FormData) => updateBudget(fd),
     undefined as ActionResult | undefined
   )
-  const formId = useId()
 
   useEffect(() => {
     if (!state?.success) return
@@ -34,112 +51,74 @@ const EditBudgetFormInner = ({ budget, expenseCategories, creditCards, onSaved }
   }, [state?.success, onSaved])
 
   return (
-    <form id={formId} action={formAction} className="flex flex-col gap-3 px-4 pb-4 pt-0 sm:px-6 sm:pb-6">
-      <input type="hidden" name="budgetId" value={budget.budgetId} />
-      <div>
-        <label
-          htmlFor={`${formId}-cat`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Categoría
-        </label>
-        <select
-          id={`${formId}-cat`}
-          name="categoryId"
-          required
-          defaultValue={budget.categoryId}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        >
-          {expenseCategories.map((c) => (
-            <option key={c.id} value={c.id}>
-              {c.name}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-limit`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Límite (USD)
-        </label>
-        <input
-          id={`${formId}-limit`}
-          name="amountLimit"
-          type="number"
-          inputMode="decimal"
-          min="0"
-          step="0.01"
-          required
-          defaultValue={budget.limit}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label
-          htmlFor={`${formId}-pay`}
-          className="block text-xs font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Día de pago
-        </label>
-        <input
-          id={`${formId}-pay`}
-          name="paymentDate"
-          type="date"
-          required
-          defaultValue={paymentDateDefaultForMonth(monthStartIso(new Date()), budget.paymentDay)}
-          className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-        />
-      </div>
-      <div>
-        <label htmlFor={`${formId}-card`} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
-          Tarjeta (opcional)
-        </label>
-        {creditCards.length === 0 ? (
-          <p className="mt-2 text-xs text-zinc-500 dark:text-zinc-400">
-            <Link href="/credit-cards" className="font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400">
-              Registrar tarjeta
-            </Link>{" "}
-            para vincularla.
-          </p>
-        ) : (
-          <select
-            id={`${formId}-card`}
-            name="creditCardId"
-            defaultValue={budget.creditCardId ?? ""}
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm dark:border-zinc-700 dark:bg-zinc-950"
-          >
-            <option value="">Sin tarjeta</option>
-            {creditCards.map((c) => (
+    <>
+      <form id={formId} action={formAction} className="flex flex-col gap-4">
+        <input type="hidden" name="budgetId" value={budget.budgetId} />
+        <Field>
+          <Label>Categoría</Label>
+          <Select id={`${formId}-cat`} name="categoryId" required defaultValue={budget.categoryId}>
+            {expenseCategories.map((c) => (
               <option key={c.id} value={c.id}>
-                {creditOptionLabel(c)}
+                {c.name}
               </option>
             ))}
-          </select>
-        )}
-      </div>
-      {state?.error ? (
-        <p className="text-sm text-red-600 dark:text-red-400" role="alert">
-          {state.error}
-        </p>
-      ) : null}
-      {state?.success ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          Cambios guardados.
-        </p>
-      ) : null}
-      <div className="mt-1 flex flex-wrap gap-2">
-        <button
-          type="submit"
-          form={formId}
-          disabled={pending || expenseCategories.length === 0}
-          className="min-h-11 flex-1 rounded-xl bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50"
-        >
+          </Select>
+        </Field>
+        <Field>
+          <Label>Límite (USD)</Label>
+          <Input
+            id={`${formId}-limit`}
+            name="amountLimit"
+            type="number"
+            inputMode="decimal"
+            min="0"
+            step="0.01"
+            required
+            defaultValue={budget.limit}
+          />
+        </Field>
+        <Field>
+          <Label>Día de pago</Label>
+          <Input
+            id={`${formId}-pay`}
+            name="paymentDate"
+            type="date"
+            required
+            defaultValue={paymentDateDefaultForMonth(monthStartIso(new Date()), budget.paymentDay)}
+          />
+        </Field>
+        <Field>
+          <Label>Tarjeta (opcional)</Label>
+          {creditCards.length === 0 ? (
+            <Text>
+              <TextLink href="/credit-cards">Registrar tarjeta</TextLink> para vincularla.
+            </Text>
+          ) : (
+            <Select
+              id={`${formId}-card`}
+              name="creditCardId"
+              defaultValue={budget.creditCardId ?? ""}
+            >
+              <option value="">Sin tarjeta</option>
+              {creditCards.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {creditOptionLabel(c)}
+                </option>
+              ))}
+            </Select>
+          )}
+        </Field>
+        {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
+      </form>
+      <DialogActions>
+        <Button type="button" plain onClick={onSaved}>
+          Cancelar
+        </Button>
+        <Button type="submit" form={formId} color="emerald" disabled={pending || expenseCategories.length === 0}>
           {pending ? "Guardando…" : "Guardar cambios"}
-        </button>
-      </div>
-    </form>
+        </Button>
+      </DialogActions>
+    </>
   )
 }
 
@@ -150,61 +129,47 @@ interface EditBudgetDialogProps {
 }
 
 export const EditBudgetDialog = ({ expenseCategories, creditCards, budget }: EditBudgetDialogProps) => {
-  const dialogRef = useRef<HTMLDialogElement>(null)
-  const titleId = useId()
+  const formId = useId()
+  const [open, setOpen] = useState(false)
   const [formNonce, setFormNonce] = useState(0)
 
   const handleCloseDialog = useCallback(() => {
-    dialogRef.current?.close()
+    setOpen(false)
   }, [])
 
   const handleClickOpen = () => {
     setFormNonce((n) => n + 1)
-    dialogRef.current?.showModal()
+    setOpen(true)
   }
 
   return (
     <>
-      <button
+      <Button
+        plain
         type="button"
         onClick={handleClickOpen}
         disabled={expenseCategories.length === 0}
-        className="inline-flex size-10 items-center justify-center rounded-lg text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-600 disabled:opacity-50 dark:hover:bg-zinc-800 dark:hover:text-zinc-100"
         aria-label={`Editar presupuesto de ${budget.categoryName}`}
         aria-haspopup="dialog"
       >
-        <Pencil className="size-4" aria-hidden />
-      </button>
-      <dialog
-        ref={dialogRef}
-        className="fixed left-1/2 top-1/2 z-50 max-h-[min(90dvh,100%)] w-[min(100vw-2rem,26rem)] -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-zinc-200 bg-white p-0 text-zinc-900 shadow-xl backdrop:bg-black/50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100"
-        aria-labelledby={titleId}
-      >
-        <div className="flex flex-col gap-1 border-b border-zinc-200 px-4 py-4 dark:border-zinc-800 sm:px-6">
-          <h2 id={titleId} className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
-            Editar presupuesto
-          </h2>
-          <p className="text-xs text-zinc-500 dark:text-zinc-400">
-            Podés cambiar categoría, límite y día de pago. El avance se ve según el mes elegido en Resumen.
-          </p>
-        </div>
-        <EditBudgetFormInner
-          key={formNonce}
-          budget={budget}
-          expenseCategories={expenseCategories}
-          creditCards={creditCards}
-          onSaved={handleCloseDialog}
-        />
-        <div className="border-t border-zinc-200 px-4 py-3 dark:border-zinc-800 sm:px-6">
-          <button
-            type="button"
-            onClick={handleCloseDialog}
-            className="w-full min-h-11 rounded-xl border border-zinc-200 bg-white py-3 text-sm font-medium text-zinc-800 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
-          >
-            Cancelar
-          </button>
-        </div>
-      </dialog>
+        <PencilIcon />
+      </Button>
+      <Dialog open={open} onClose={handleCloseDialog} size="md">
+        <DialogTitle>Editar presupuesto</DialogTitle>
+        <DialogDescription>
+          Podés cambiar categoría, límite y día de pago. El avance se ve según el mes elegido en Resumen.
+        </DialogDescription>
+        <DialogBody>
+          <EditBudgetFormInner
+            key={formNonce}
+            budget={budget}
+            expenseCategories={expenseCategories}
+            creditCards={creditCards}
+            formId={formId}
+            onSaved={handleCloseDialog}
+          />
+        </DialogBody>
+      </Dialog>
     </>
   )
 }

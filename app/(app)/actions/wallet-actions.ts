@@ -4,14 +4,16 @@ import { revalidatePath } from "next/cache"
 import { cookies } from "next/headers"
 import { z } from "zod"
 import { createClient } from "@/lib/supabase/server"
-import type { BudgetAlertRow } from "@/lib/types/wallet"
+import type { BudgetAlertRow, BudgetCategoryMovement } from "@/lib/types/wallet"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
 import {
   BUDGET_DB_MONTH_ANCHOR,
+  clampIsoDateToRange,
   normalizeMonthStartInput,
   parsePaymentDayFromDateInput,
 } from "@/lib/dates/month"
 import { getWalletAppMonthRange, WALLET_APP_MONTH_COOKIE } from "@/lib/dates/wallet-app-month"
+import { todayInElSalvador } from "@/lib/dates/el-salvador"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
 import { formatExpMmYy, holderShortFromCard, panLast4 } from "@/lib/credit-card/format"
 
@@ -104,10 +106,15 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
     return { error: "La categoría no coincide con el tipo de movimiento" }
   }
 
-  const occurred =
+  let occurred =
     parsed.data.occurredAt && parsed.data.occurredAt.length >= 10
       ? parsed.data.occurredAt.slice(0, 10)
-      : new Date().toISOString().slice(0, 10)
+      : todayInElSalvador()
+
+  if (formData.get("constrainToAppMonth") === "1") {
+    const { start, end } = await getWalletAppMonthRange()
+    occurred = clampIsoDateToRange(occurred, start, end)
+  }
 
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
@@ -119,6 +126,67 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
   })
 
   if (error) return { error: error.message }
+
+  revalidatePath("/dashboard")
+  revalidatePath("/transactions")
+  revalidatePath("/budgets")
+  return { success: true }
+}
+
+const updateTransactionSchema = z.object({
+  transactionId: z.string().uuid(),
+  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  note: z.string().max(500).optional(),
+  occurredAt: z.string().optional(),
+})
+
+export async function updateTransaction(formData: FormData): Promise<ActionResult> {
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return { error: "No autenticado" }
+
+  const parsed = updateTransactionSchema.safeParse({
+    transactionId: formData.get("transactionId"),
+    amount: formData.get("amount"),
+    note: formData.get("note") || undefined,
+    occurredAt: formData.get("occurredAt") || undefined,
+  })
+  if (!parsed.success) {
+    const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
+    return { error: msg ?? "Datos inválidos" }
+  }
+
+  const { data: existing } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("id", parsed.data.transactionId)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!existing) return { error: "Movimiento no encontrado" }
+
+  let occurred =
+    parsed.data.occurredAt && parsed.data.occurredAt.length >= 10
+      ? parsed.data.occurredAt.slice(0, 10)
+      : todayInElSalvador()
+
+  if (formData.get("constrainToAppMonth") === "1") {
+    const { start, end } = await getWalletAppMonthRange()
+    occurred = clampIsoDateToRange(occurred, start, end)
+  }
+
+  const { error: updateError } = await supabase
+    .from("transactions")
+    .update({
+      amount: parsed.data.amount,
+      note: parsed.data.note?.trim() || null,
+      occurred_at: occurred,
+    })
+    .eq("id", parsed.data.transactionId)
+    .eq("user_id", user.id)
+
+  if (updateError) return { error: updateError.message }
 
   revalidatePath("/dashboard")
   revalidatePath("/transactions")
@@ -534,16 +602,27 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
 
   const { data: tx } = await supabase
     .from("transactions")
-    .select("category_id, amount")
+    .select("id, category_id, amount, note, occurred_at")
     .eq("user_id", user.id)
     .eq("kind", "expense")
     .gte("occurred_at", start)
     .lte("occurred_at", end)
+    .order("occurred_at", { ascending: false })
 
   const spentByCategory = new Map<string, number>()
+  const movementsByCategory = new Map<string, BudgetCategoryMovement[]>()
   for (const t of tx ?? []) {
-    const prev = spentByCategory.get(t.category_id) ?? 0
-    spentByCategory.set(t.category_id, prev + Number(t.amount))
+    const categoryId = t.category_id as string
+    const amount = Number(t.amount)
+    spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + amount)
+    const list = movementsByCategory.get(categoryId) ?? []
+    list.push({
+      id: t.id as string,
+      amount,
+      note: (t.note as string | null) ?? null,
+      occurredAt: String(t.occurred_at).slice(0, 10),
+    })
+    movementsByCategory.set(categoryId, list)
   }
 
   return budgets.flatMap((b) => {
@@ -589,6 +668,7 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
         paymentDay: Math.min(31, Math.max(1, Number(b.payment_day) || 1)),
         creditCardId: cid,
         card,
+        movements: movementsByCategory.get(cat.id) ?? [],
       },
     ]
   })

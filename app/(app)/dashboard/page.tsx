@@ -4,14 +4,18 @@ import { ExpenseByCategoryChart } from "@/components/charts/expense-by-category-
 import { IncomeExpenseBars } from "@/components/charts/income-expense-bars"
 import { CategoryIcon } from "@/components/category-icon"
 import { EditBudgetDialog } from "@/components/edit-budget-dialog"
+import { BudgetMonthDisclosure } from "@/components/budget-month-disclosure"
 import { RegisterBudgetPaymentDialog } from "@/components/register-budget-payment-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { MotionStatCard } from "@/components/motion-stat-card"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
-import { clampIsoDateToRange, monthLabel } from "@/lib/dates/month"
+import { monthLabel } from "@/lib/dates/month"
+import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
-import { formatMoney } from "@/lib/format/money"
+import { Heading, Subheading } from "@/components/ui/heading"
+import { Text } from "@/components/ui/text"
+import { formatMoney, remainingToPay } from "@/lib/format/money"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
 
@@ -43,11 +47,6 @@ export default async function DashboardPage() {
   if (!user) return null
 
   const { start, end, monthStart } = await getWalletAppMonthRange()
-  const defaultPaymentOccurredAt = clampIsoDateToRange(
-    new Date().toISOString().slice(0, 10),
-    start,
-    end
-  )
 
   const { data: categoriesData } = await supabase
     .from("categories")
@@ -135,12 +134,10 @@ export default async function DashboardPage() {
     <div className="flex flex-col gap-8">
       <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-            Resumen
-          </h1>
-          <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+          <Heading>Resumen</Heading>
+          <Text className="mt-1">
             {monthLabel(monthStart)} · balance y movimientos del mes en contexto
-          </p>
+          </Text>
         </div>
         <WalletAppMonthSelect monthStart={monthStart} />
       </header>
@@ -183,98 +180,40 @@ export default async function DashboardPage() {
           className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="budget-alerts-heading"
         >
-          <h2
-            id="budget-alerts-heading"
-            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
-          >
+          <Subheading id="budget-alerts-heading" level={2}>
             Presupuestos del mes
-          </h2>
-          <ul className="mt-4 flex flex-col gap-3">
+          </Subheading>
+          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
             {sortedAlerts.map((a) => (
-              <li key={a.budgetId}>
-                <div className="flex items-center gap-3">
-                  <span
-                    className="flex size-10 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
-                    style={{ color: a.color }}
-                  >
-                    <CategoryIcon name={a.icon} className="size-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                        {a.categoryName}
-                      </span>
-                      <div className="flex shrink-0 items-center gap-0.5">
-                        <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
-                          {formatMoney(a.spent)} / {formatMoney(a.limit)}
-                        </span>
-                        <RegisterBudgetPaymentDialog
-                          categoryId={a.categoryId}
-                          categoryName={a.categoryName}
-                          defaultOccurredAt={defaultPaymentOccurredAt}
-                        />
-                        <EditBudgetDialog
-                          expenseCategories={expenseCategories}
-                          creditCards={creditCards}
-                          budget={{
-                            budgetId: a.budgetId,
-                            categoryId: a.categoryId,
-                            categoryName: a.categoryName,
-                            limit: a.limit,
-                            paymentDay: a.paymentDay,
-                            creditCardId: a.creditCardId,
-                          }}
-                        />
-                      </div>
-                    </div>
-                    <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                      Pago día <span className="tabular-nums">{a.paymentDay}</span>
-                    </p>
-                    {a.card ? (
-                      <p className="mt-0.5 text-xs text-zinc-600 dark:text-zinc-300">
-                        <span className="rounded-md bg-zinc-200/80 px-1.5 py-0.5 font-medium tabular-nums dark:bg-zinc-800">
-                          •••• {a.card.last4}
-                        </span>{" "}
-                        <span className="text-zinc-500 dark:text-zinc-400">{a.card.holderShort}</span>
-                      </p>
-                    ) : null}
-                    <div
-                      className="mt-2 h-2 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800"
-                      role="progressbar"
-                      aria-valuenow={Math.min(100, Math.round(a.ratio * 100))}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-label={`Progreso de presupuesto ${a.categoryName}`}
-                    >
-                      <div
-                        className={`h-full rounded-full transition-all ${
-                          a.level === "over" && a.spent !== a.limit
-                            ? "bg-red-500"
-                            : a.level === "warn"
-                              ? "bg-amber-500"
-                              : "bg-emerald-500"
-                        }`}
-                        style={{ width: `${Math.min(100, a.ratio * 100)}%` }}
+              <li key={a.budgetId} className="py-3 first:pt-0 last:pb-0">
+                <BudgetMonthDisclosure
+                  budget={a}
+                  monthStart={start}
+                  monthEnd={end}
+                  actions={
+                    <>
+                      <RegisterBudgetPaymentDialog
+                        categoryId={a.categoryId}
+                        categoryName={a.categoryName}
+                        defaultAmount={remainingToPay(a.limit, a.spent)}
+                        monthStart={start}
+                        monthEnd={end}
                       />
-                    </div>
-                    {a.level === "over" ? (
-                      a.spent === a.limit ? (
-                        <p className="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
-                          Gastaste lo justo de tu presupuesto.
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">
-                          Pasaste el límite de presupuesto.
-                        </p>
-                      )
-                    ) : null}
-                    {a.level === "warn" ? (
-                      <p className="mt-1 text-xs font-medium text-amber-700 dark:text-amber-400">
-                        Cerca del límite (80% o más).
-                      </p>
-                    ) : null}
-                  </div>
-                </div>
+                      <EditBudgetDialog
+                        expenseCategories={expenseCategories}
+                        creditCards={creditCards}
+                        budget={{
+                          budgetId: a.budgetId,
+                          categoryId: a.categoryId,
+                          categoryName: a.categoryName,
+                          limit: a.limit,
+                          paymentDay: a.paymentDay,
+                          creditCardId: a.creditCardId,
+                        }}
+                      />
+                    </>
+                  }
+                />
               </li>
             ))}
           </ul>
@@ -286,24 +225,18 @@ export default async function DashboardPage() {
           className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="chart-bars-heading"
         >
-          <h2
-            id="chart-bars-heading"
-            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
-          >
+          <Subheading id="chart-bars-heading" level={2}>
             Ingresos vs gastos
-          </h2>
+          </Subheading>
           <IncomeExpenseBars income={monthIncome} expense={monthExpense} />
         </section>
         <section
           className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
           aria-labelledby="chart-pie-heading"
         >
-          <h2
-            id="chart-pie-heading"
-            className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
-          >
+          <Subheading id="chart-pie-heading" level={2}>
             Gastos por categoría
-          </h2>
+          </Subheading>
           <ExpenseByCategoryChart data={pieData} />
         </section>
       </div>
@@ -312,16 +245,13 @@ export default async function DashboardPage() {
         className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
         aria-labelledby="recent-heading"
       >
-        <h2
-          id="recent-heading"
-          className="text-base font-semibold text-zinc-900 dark:text-zinc-100"
-        >
+        <Subheading id="recent-heading" level={2}>
           Movimientos del mes
-        </h2>
+        </Subheading>
         {recent.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <Text className="mt-4">
             No hay movimientos en {monthLabel(monthStart)}. Registrá un gasto o ingreso arriba o cambiá el mes.
-          </p>
+          </Text>
         ) : (
           <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
             {recent.map((t) => {
@@ -347,7 +277,7 @@ export default async function DashboardPage() {
                       {cat?.name ?? "Sin categoría"}
                     </p>
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {t.occurred_at}
+                      {formatDateEsSV(t.occurred_at)}
                       {t.note ? ` · ${t.note}` : ""}
                     </p>
                   </div>

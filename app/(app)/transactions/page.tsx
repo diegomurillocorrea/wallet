@@ -1,7 +1,10 @@
+import { Heading, Subheading } from "@/components/ui/heading"
+import { Text } from "@/components/ui/text"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { monthLabel } from "@/lib/dates/month"
+import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { formatMoney } from "@/lib/format/money"
 import { createClient } from "@/lib/supabase/server"
@@ -92,12 +95,10 @@ export default async function TransactionsPage() {
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
-          Movimientos
-        </h1>
-        <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400">
+        <Heading>Movimientos</Heading>
+        <Text className="mt-1">
           Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen). Registro rápido abajo.
-        </p>
+        </Text>
       </header>
 
       <TransactionQuickForm categories={categories} />
@@ -106,13 +107,13 @@ export default async function TransactionsPage() {
         className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
         aria-labelledby="tx-list-heading"
       >
-        <h2 id="tx-list-heading" className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <Subheading id="tx-list-heading" level={2}>
           Historial
-        </h2>
+        </Subheading>
         {rows.length === 0 ? (
-          <p className="mt-4 text-sm text-zinc-500 dark:text-zinc-400">
+          <Text className="mt-4">
             No hay movimientos todavía.
-          </p>
+          </Text>
         ) : (
           <div className="mt-4 flex flex-col gap-6">
             {groups.map((group) => (
@@ -142,7 +143,7 @@ export default async function TransactionsPage() {
                       <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
                         <div className="min-w-0 flex-1">
                           <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                            {t.occurred_at}
+                            {formatDateEsSV(t.occurred_at)}
                             {t.note ? ` · ${t.note}` : ""}
                           </p>
                         </div>

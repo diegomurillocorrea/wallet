@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState, type ChangeEvent } from "react"
+import { Input } from "@/components/ui/input"
 import { formatExpiryMmYyTyping } from "@/lib/credit-card/format"
 
 interface ExpiryMmYyInputProps {
@@ -9,7 +10,6 @@ interface ExpiryMmYyInputProps {
   initialValue?: string
   required?: boolean
   placeholder?: string
-  className?: string
   "aria-describedby"?: string
 }
 
@@ -19,7 +19,6 @@ export function ExpiryMmYyInput({
   initialValue = "",
   required,
   placeholder = "MM/AA",
-  className,
   "aria-describedby": ariaDescribedBy,
 }: ExpiryMmYyInputProps) {
   const [value, setValue] = useState(() => formatExpiryMmYyTyping(initialValue))
@@ -33,7 +32,7 @@ export function ExpiryMmYyInput({
   }
 
   return (
-    <input
+    <Input
       id={id}
       name={name}
       type="text"
@@ -45,7 +44,6 @@ export function ExpiryMmYyInput({
       maxLength={5}
       placeholder={placeholder}
       aria-describedby={ariaDescribedBy}
-      className={className}
     />
   )
 }
