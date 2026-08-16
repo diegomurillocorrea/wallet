@@ -11,8 +11,8 @@ interface IncomeExpenseBarsProps {
 export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) => {
   const { ref, width, height } = useChartContainerSize()
   const data = [
-    { name: "Ingresos", value: income, fill: "#059669" },
-    { name: "Gastos", value: expense, fill: "#f97316" },
+    { name: "Ingresos", value: income, fill: "var(--foreground)" },
+    { name: "Gastos", value: expense, fill: "var(--color-orange-500)" },
   ]
 
   return (
@@ -35,8 +35,9 @@ export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) =
             }
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid rgb(226 232 240)",
-              background: "white",
+              border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
+              background: "var(--color-white)",
+              color: "var(--foreground)",
             }}
           />
           <Bar dataKey="value" radius={[8, 8, 0, 0]} name="Monto" />

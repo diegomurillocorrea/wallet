@@ -64,9 +64,9 @@ const IconPickButton = memo(({ iconKey, isSelected, onSelect }: IconPickButtonPr
       onKeyDown={handleKeyDown}
       aria-label={`Elegir ícono ${iconKey}`}
       aria-pressed={isSelected}
-      className={`flex size-10 items-center justify-center rounded-xl border text-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:text-zinc-200 ${
+      className={`flex size-10 items-center justify-center rounded-xl border text-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-forest/50 dark:text-zinc-200 dark:focus:ring-butter/50 ${
         isSelected
-          ? "border-emerald-500 bg-emerald-50 dark:border-emerald-400 dark:bg-emerald-950/50"
+          ? "border-forest bg-emerald-50 dark:border-butter dark:bg-emerald-950/50"
           : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
       }`}
     >
@@ -140,7 +140,7 @@ export const CategoryIconPicker = ({ defaultIcon = "circle", idPrefix = "cat-ico
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Ej. dog, coffee, train-front…"
         autoComplete="off"
-        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-400 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-500"
+        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-500 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-400 dark:focus:border-butter dark:focus:ring-butter/20"
         aria-describedby={hintId}
       />
       <p id={hintId} className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -191,7 +191,7 @@ export const CategoryIconPicker = ({ defaultIcon = "circle", idPrefix = "cat-ico
           type="button"
           onClick={handleApplyExact}
           disabled={!resolveCategoryIconKey(exactDraft)}
-          className="h-11 shrink-0 rounded-xl border border-zinc-200 bg-zinc-100 px-4 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+          className="h-11 shrink-0 rounded-xl border border-zinc-200 bg-zinc-100 px-4 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-forest/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-butter/50"
         >
           Usar nombre
         </button>

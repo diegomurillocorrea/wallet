@@ -22,6 +22,7 @@ import {
   resolveEffectiveLimit,
   type BudgetLimitVersion,
 } from "@/lib/budgets/limits"
+import { fetchExpenseSumByCategory } from "@/lib/budgets/spent"
 
 const parseCreditCardIdFromForm = (fd: FormData): string | undefined => {
   const v = fd.get("creditCardId")
@@ -102,22 +103,6 @@ const upsertBudgetLimitRows = async (
     }
   }
   return {}
-}
-
-const syncBudgetMirrorAmount = async (
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  budgetId: string,
-  userId: string,
-  amountLimit: number
-) => {
-  await supabase
-    .from("budgets")
-    .update({
-      amount_limit: amountLimit,
-      month_start: "2000-01-01",
-    })
-    .eq("id", budgetId)
-    .eq("user_id", userId)
 }
 
 export async function ensureDefaultCategories() {
@@ -612,8 +597,6 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       .update({
         payment_day: paymentDay,
         credit_card_id: creditCardId,
-        amount_limit: amount,
-        month_start: "2000-01-01",
       })
       .eq("id", budgetId)
       .eq("user_id", user.id)
@@ -629,8 +612,6 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
       .insert({
         user_id: user.id,
         category_id: parsed.data.categoryId,
-        amount_limit: amount,
-        month_start: "2000-01-01",
         payment_day: paymentDay,
         credit_card_id: creditCardId,
       })
@@ -729,8 +710,6 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     .from("budgets")
     .update({
       category_id: parsed.data.categoryId,
-      amount_limit: amount,
-      month_start: "2000-01-01",
       payment_day: paymentDay,
       credit_card_id: creditCardId,
     })
@@ -745,8 +724,6 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
   const { upserts } = planLimitEdit(versions, monthStart, amount)
   const limitResult = await upsertBudgetLimitRows(supabase, parsed.data.budgetId, upserts)
   if (limitResult.error) return { error: limitResult.error }
-
-  await syncBudgetMirrorAmount(supabase, parsed.data.budgetId, user.id, amount)
 
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
@@ -846,12 +823,11 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     .lte("occurred_at", end)
     .order("occurred_at", { ascending: false })
 
-  const spentByCategory = new Map<string, number>()
+  const spentByCategory = await fetchExpenseSumByCategory(supabase, user.id, start, end)
   const movementsByCategory = new Map<string, BudgetCategoryMovement[]>()
   for (const t of tx ?? []) {
     const categoryId = t.category_id as string
     const amount = roundMoney(Number(t.amount))
-    spentByCategory.set(categoryId, roundMoney((spentByCategory.get(categoryId) ?? 0) + amount))
     const list = movementsByCategory.get(categoryId) ?? []
     list.push({
       id: t.id as string,

@@ -13,6 +13,7 @@ import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/app/(app)/actions/wallet-actions"
 import { resolveEffectiveLimit, type BudgetLimitVersion } from "@/lib/budgets/limits"
+import { fetchExpenseSumByCategory } from "@/lib/budgets/spent"
 import { roundMoney } from "@/lib/format/money"
 import type {
   BudgetLinkedToCardRow,
@@ -213,12 +214,16 @@ const rowToListItem = (row: {
   exp_label: formatExpMmYy(row.exp_month, row.exp_year),
 })
 
-export async function listCreditCardsForUser(): Promise<CreditCardListItem[]> {
+export type CreditCardListResult =
+  | { ok: true, cards: CreditCardListItem[] }
+  | { ok: false, error: string }
+
+export async function listCreditCardsForUser(): Promise<CreditCardListResult> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return []
+  if (!user) return { ok: false, error: "No autenticado" }
 
   const { data, error } = await supabase
     .from("credit_cards")
@@ -227,22 +232,26 @@ export async function listCreditCardsForUser(): Promise<CreditCardListItem[]> {
     .order("created_at", { ascending: false })
 
   if (error) {
-    console.error("listCreditCardsForUser", error.message)
-    return []
+    return { ok: false, error: error.message }
   }
-  if (!data?.length) return []
-  return data.map(rowToListItem)
+  return { ok: true, cards: (data ?? []).map(rowToListItem) }
 }
 
-export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageGroup[]> {
+export type CreditCardBudgetUsageResult =
+  | { ok: true, groups: CreditCardBudgetUsageGroup[] }
+  | { ok: false, error: string }
+
+export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageResult> {
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
-  if (!user) return []
+  if (!user) return { ok: false, error: "No autenticado" }
 
-  const cards = await listCreditCardsForUser()
-  if (cards.length === 0) return []
+  const cardsResult = await listCreditCardsForUser()
+  if (!cardsResult.ok) return cardsResult
+  const cards = cardsResult.cards
+  if (cards.length === 0) return { ok: true, groups: [] }
 
   const { start, end, monthStart } = await getWalletAppMonthRange()
 
@@ -260,21 +269,27 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     .not("credit_card_id", "is", null)
 
   if (error) {
-    console.error("getCreditCardBudgetUsage", error.message)
-    return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
+    return { ok: false, error: error.message }
   }
 
   const rows = budgetRows ?? []
   if (rows.length === 0) {
-    return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
+    return {
+      ok: true,
+      groups: cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 })),
+    }
   }
 
   const budgetIds = rows.map((b) => b.id as string)
-  const { data: limitRows } = await supabase
+  const { data: limitRows, error: limitError } = await supabase
     .from("budget_limits")
     .select("budget_id, month_start, amount_limit")
     .in("budget_id", budgetIds)
     .order("month_start", { ascending: true })
+
+  if (limitError) {
+    return { ok: false, error: limitError.message }
+  }
 
   const versionsByBudget = new Map<string, BudgetLimitVersion[]>()
   for (const row of limitRows ?? []) {
@@ -287,20 +302,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     versionsByBudget.set(bid, list)
   }
 
-  const { data: tx } = await supabase
-    .from("transactions")
-    .select("category_id, amount")
-    .eq("user_id", user.id)
-    .eq("kind", "expense")
-    .gte("occurred_at", start)
-    .lte("occurred_at", end)
-
-  const spentByCategory = new Map<string, number>()
-  for (const t of tx ?? []) {
-    const cid = t.category_id as string
-    const prev = spentByCategory.get(cid) ?? 0
-    spentByCategory.set(cid, roundMoney(prev + Number(t.amount)))
-  }
+  const spentByCategory = await fetchExpenseSumByCategory(supabase, user.id, start, end)
 
   const byCard = new Map<string, BudgetLinkedToCardRow[]>()
 
@@ -344,9 +346,12 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     list.sort((a, b) => a.categoryName.localeCompare(b.categoryName, "es"))
   }
 
-  return cards.map((card) => {
-    const budgets = byCard.get(card.id) ?? []
-    const totalSpentOnCard = roundMoney(budgets.reduce((sum, r) => sum + r.spent, 0))
-    return { card, budgets, totalSpentOnCard }
-  })
+  return {
+    ok: true,
+    groups: cards.map((card) => {
+      const budgets = byCard.get(card.id) ?? []
+      const totalSpentOnCard = roundMoney(budgets.reduce((sum, r) => sum + r.spent, 0))
+      return { card, budgets, totalSpentOnCard }
+    }),
+  }
 }

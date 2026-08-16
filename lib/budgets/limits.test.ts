@@ -37,7 +37,7 @@ describe("resolveEffectiveLimit", () => {
 
 describe("planLimitEdit", () => {
   it("isolates a past-month edit and materializes the next month", () => {
-    const versions = [{ monthStart: "2000-01-01", amountLimit: 300 }]
+    const versions = [{ monthStart: "2026-01-01", amountLimit: 300 }]
     const { upserts } = planLimitEdit(versions, "2026-07-01", 350, "2026-08-01")
     assert.deepEqual(upserts, [
       { monthStart: "2026-07-01", amountLimit: 350 },
@@ -47,7 +47,7 @@ describe("planLimitEdit", () => {
 
   it("does not overwrite an explicit next-month version when editing past", () => {
     const versions = [
-      { monthStart: "2000-01-01", amountLimit: 300 },
+      { monthStart: "2026-01-01", amountLimit: 300 },
       { monthStart: "2026-08-01", amountLimit: 300 },
     ]
     const { upserts } = planLimitEdit(versions, "2026-07-01", 350, "2026-08-01")
@@ -55,9 +55,18 @@ describe("planLimitEdit", () => {
   })
 
   it("only upserts current/future month", () => {
-    const versions = [{ monthStart: "2000-01-01", amountLimit: 100 }]
+    const versions = [{ monthStart: "2026-01-01", amountLimit: 100 }]
     const { upserts } = planLimitEdit(versions, "2026-08-01", 200, "2026-08-01")
     assert.deepEqual(upserts, [{ monthStart: "2026-08-01", amountLimit: 200 }])
+  })
+})
+
+describe("budget history start 2026-01-01", () => {
+  it("hides budgets before January 2026 when first version is the cutoff", () => {
+    const versions = [{ monthStart: "2026-01-01", amountLimit: 200 }]
+    assert.equal(resolveEffectiveLimit(versions, "2025-12-01"), null)
+    assert.equal(resolveEffectiveLimit(versions, "2026-01-01"), 200)
+    assert.equal(resolveEffectiveLimit(versions, "2026-05-01"), 200)
   })
 })
 

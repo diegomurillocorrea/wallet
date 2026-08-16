@@ -26,7 +26,11 @@ export default async function BudgetsPage() {
   const expenseCategories = allCategories.filter((c) => c.kind === "expense")
 
   const { start, end, monthStart } = await getWalletAppMonthRange()
-  const [budgets, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
+  const [budgets, cardsResult] = await Promise.all([
+    getBudgetAlertsForUser(),
+    listCreditCardsForUser(),
+  ])
+  const creditCards = cardsResult.ok ? cardsResult.cards : []
 
   return (
     <div className="flex flex-col gap-8">
@@ -39,6 +43,15 @@ export default async function BudgetsPage() {
         </div>
         <WalletAppMonthSelect monthStart={monthStart} />
       </header>
+
+      {!cardsResult.ok ? (
+        <p
+          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
+          role="alert"
+        >
+          No se pudieron cargar las tarjetas: {cardsResult.error}
+        </p>
+      ) : null}
 
       <BudgetsWorkspace
         expenseCategories={expenseCategories}

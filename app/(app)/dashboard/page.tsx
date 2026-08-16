@@ -15,15 +15,10 @@ import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { Heading, Subheading } from "@/components/ui/heading"
 import { Text } from "@/components/ui/text"
-import { formatMoney, remainingToPay } from "@/lib/format/money"
+import { formatMoney, remainingToPay, roundMoney } from "@/lib/format/money"
+import { fetchExpenseSumByCategory, fetchMonthIncomeExpenseTotals } from "@/lib/budgets/spent"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
-
-interface MonthTxRow {
-  amount: number | string
-  kind: string
-  category: { id: string, name: string, color: string } | null
-}
 
 interface RecentRow {
   id: string
@@ -55,47 +50,24 @@ export default async function DashboardPage() {
     .order("name")
 
   const categories = (categoriesData ?? []) as CategoryRow[]
+  const categoryById = new Map(categories.map((c) => [c.id, c]))
 
-  const { data: monthTxData } = await supabase
-    .from("transactions")
-    .select(
-      `
-      amount,
-      kind,
-      category:categories ( id, name, color )
-    `
-    )
-    .eq("user_id", user.id)
-    .gte("occurred_at", start)
-    .lte("occurred_at", end)
+  const [totals, spentByCategory] = await Promise.all([
+    fetchMonthIncomeExpenseTotals(supabase, user.id, start, end),
+    fetchExpenseSumByCategory(supabase, user.id, start, end),
+  ])
 
-  const monthTx = (monthTxData ?? []) as unknown as MonthTxRow[]
+  const monthIncome = totals.income
+  const monthExpense = totals.expense
+  const monthBalance = roundMoney(monthIncome - monthExpense)
 
-  let monthIncome = 0
-  let monthExpense = 0
-  const expenseByCat = new Map<string, { name: string, color: string, value: number }>()
-
-  for (const t of monthTx) {
-    const amt = Number(t.amount)
-    if (t.kind === "income") {
-      monthIncome += amt
-      continue
-    }
-    monthExpense += amt
-    const cat = t.category
-    if (!cat?.id) continue
-    const prev = expenseByCat.get(cat.id) ?? { name: cat.name, color: cat.color, value: 0 }
-    prev.value += amt
-    expenseByCat.set(cat.id, prev)
-  }
-
-  const monthBalance = monthIncome - monthExpense
-
-  const pieData = [...expenseByCat.values()].map((c) => ({
-    name: c.name,
-    value: c.value,
-    color: c.color,
-  }))
+  const pieData = [...spentByCategory.entries()]
+    .map(([id, value]) => {
+      const cat = categoryById.get(id)
+      if (!cat || value <= 0) return null
+      return { name: cat.name, value, color: cat.color }
+    })
+    .filter((row): row is { name: string, value: number, color: string } => row != null)
 
   const { data: recentData } = await supabase
     .from("transactions")
@@ -117,7 +89,11 @@ export default async function DashboardPage() {
 
   const recent = (recentData ?? []) as unknown as RecentRow[]
 
-  const [alerts, creditCards] = await Promise.all([getBudgetAlertsForUser(), listCreditCardsForUser()])
+  const [alerts, cardsResult] = await Promise.all([
+    getBudgetAlertsForUser(),
+    listCreditCardsForUser(),
+  ])
+  const creditCards = cardsResult.ok ? cardsResult.cards : []
   const sortedAlerts = [...alerts].sort((a, b) => {
     if (a.paymentDay !== b.paymentDay) return a.paymentDay - b.paymentDay
     const aCard = a.card?.last4 ?? ""

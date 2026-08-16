@@ -2,6 +2,9 @@ import { addMonths, format, getDaysInMonth, parseISO, setDate, startOfMonth } fr
 import { monthStartIso } from "@/lib/dates/month"
 import { todayDateInElSalvador } from "@/lib/dates/el-salvador"
 
+/** Primera versión visible para presupuestos migrados desde el ancla legado */
+export const BUDGET_HISTORY_START = "2026-01-01"
+
 export interface BudgetLimitVersion {
   monthStart: string
   amountLimit: number

@@ -50,8 +50,9 @@ export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) =>
             }
             contentStyle={{
               borderRadius: "12px",
-              border: "1px solid rgb(226 232 240)",
-              background: "white",
+              border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
+              background: "var(--color-white)",
+              color: "var(--foreground)",
             }}
           />
         </PieChart>

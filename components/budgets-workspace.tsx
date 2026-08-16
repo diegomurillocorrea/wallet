@@ -109,7 +109,7 @@ export const BudgetsWorkspace = ({
                 <li
                   key={b.budgetId}
                   className={`py-3 first:pt-0 last:pb-0 ${
-                    isRowEditing ? "rounded-xl bg-emerald-500/10 ring-1 ring-emerald-500/30 dark:bg-emerald-500/10" : ""
+                    isRowEditing ? "rounded-xl bg-forest/10 ring-1 ring-forest/30 dark:bg-butter/10 dark:ring-butter/30" : ""
                   }`}
                 >
                   <BudgetMonthDisclosure

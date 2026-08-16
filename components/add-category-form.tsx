@@ -43,7 +43,7 @@ export const AddCategoryForm = () => {
           id="add-cat-color"
           name="color"
           type="color"
-          defaultValue="#6366f1"
+          defaultValue="#013e37"
           className={colorInputClass}
         />
       </Field>

@@ -8,15 +8,15 @@ export interface DefaultCategorySeed {
 }
 
 export const DEFAULT_CATEGORIES: DefaultCategorySeed[] = [
-  { name: "Comida", kind: "expense", color: "#f97316", icon: "utensils-crossed" },
-  { name: "Transporte", kind: "expense", color: "#3b82f6", icon: "car" },
-  { name: "Vivienda", kind: "expense", color: "#8b5cf6", icon: "home" },
-  { name: "Entretenimiento", kind: "expense", color: "#ec4899", icon: "gamepad-2" },
-  { name: "Salud", kind: "expense", color: "#ef4444", icon: "heart-pulse" },
-  { name: "Educación", kind: "expense", color: "#14b8a6", icon: "graduation-cap" },
-  { name: "Otros gastos", kind: "expense", color: "#64748b", icon: "more-horizontal" },
-  { name: "Salario", kind: "income", color: "#22c55e", icon: "banknote" },
-  { name: "Freelance", kind: "income", color: "#10b981", icon: "laptop" },
-  { name: "Inversiones", kind: "income", color: "#06b6d4", icon: "trending-up" },
-  { name: "Otros ingresos", kind: "income", color: "#84cc16", icon: "wallet" },
+  { name: "Comida", kind: "expense", color: "#c9a227", icon: "utensils-crossed" },
+  { name: "Transporte", kind: "expense", color: "#5a7a3a", icon: "car" },
+  { name: "Vivienda", kind: "expense", color: "#013e37", icon: "home" },
+  { name: "Entretenimiento", kind: "expense", color: "#d4b86a", icon: "gamepad-2" },
+  { name: "Salud", kind: "expense", color: "#8a6a20", icon: "heart-pulse" },
+  { name: "Educación", kind: "expense", color: "#02685c", icon: "graduation-cap" },
+  { name: "Otros gastos", kind: "expense", color: "#6b6350", icon: "more-horizontal" },
+  { name: "Salario", kind: "income", color: "#013e37", icon: "banknote" },
+  { name: "Freelance", kind: "income", color: "#2d7a6e", icon: "laptop" },
+  { name: "Inversiones", kind: "income", color: "#4a9a7a", icon: "trending-up" },
+  { name: "Otros ingresos", kind: "income", color: "#8aaa4a", icon: "wallet" },
 ]

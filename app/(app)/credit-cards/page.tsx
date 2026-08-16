@@ -16,7 +16,8 @@ export default async function CreditCardsPage() {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const cards = await listCreditCardsForUser()
+  const cardsResult = await listCreditCardsForUser()
+  const cards = cardsResult.ok ? cardsResult.cards : []
 
   return (
     <div className="flex flex-col gap-8">
@@ -34,6 +35,15 @@ export default async function CreditCardsPage() {
         </Button>
       </header>
 
+      {!cardsResult.ok ? (
+        <p
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100"
+          role="alert"
+        >
+          No se pudieron cargar las tarjetas: {cardsResult.error}
+        </p>
+      ) : null}
+
       <div className="grid gap-6 lg:grid-cols-2">
         <AddCreditCardForm />
 
@@ -44,11 +54,11 @@ export default async function CreditCardsPage() {
           <Subheading id="cc-list-heading" level={2}>
             Tus tarjetas
           </Subheading>
-          {cards.length === 0 ? (
+          {cardsResult.ok && cards.length === 0 ? (
             <Text className="mt-4">
               Todavía no hay tarjetas. Usá el formulario para agregar la primera y vincularla desde Presupuestos.
             </Text>
-          ) : (
+          ) : cards.length > 0 ? (
             <ul className="mt-4 flex flex-col gap-2">
               {cards.map((c) => (
                 <li
@@ -74,7 +84,7 @@ export default async function CreditCardsPage() {
                 </li>
               ))}
             </ul>
-          )}
+          ) : null}
         </section>
       </div>
     </div>

@@ -2,6 +2,7 @@
 
 import * as Headless from '@headlessui/react'
 import React, { useState } from 'react'
+import { Footer } from '@/components/footer'
 import { NavbarItem } from './navbar'
 
 function OpenMenuIcon() {
@@ -74,6 +75,7 @@ export function StackedLayout({
           <div className="mx-auto max-w-6xl">{children}</div>
         </div>
       </main>
+      <Footer />
     </div>
   )
 }

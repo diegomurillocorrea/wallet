@@ -149,7 +149,7 @@ export default async function TransactionsPage() {
                   <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                     {group.name}
                   </h3>
-                  <span className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
+                  <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
                     {group.items.length}
                   </span>
                 </div>

@@ -60,9 +60,9 @@ export default function SignupPage() {
         className="pointer-events-none absolute inset-0 opacity-90 dark:opacity-70"
         aria-hidden
       >
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-emerald-400/25 blur-3xl dark:bg-emerald-500/20" />
-        <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-sky-400/20 blur-3xl dark:bg-sky-500/15" />
-        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-amber-300/15 blur-3xl dark:bg-amber-400/10" />
+        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-forest/25 blur-3xl dark:bg-butter/20" />
+        <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-butter/80 blur-3xl dark:bg-forest/40" />
+        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-forest/15 blur-3xl dark:bg-butter/10" />
       </div>
       <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8">
         <div className="absolute right-4 top-4">
@@ -103,7 +103,7 @@ export default function SignupPage() {
             />
             <div className="flex items-center gap-3" role="separator" aria-label="O registrarse con correo">
               <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-400 dark:text-zinc-500">
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
                 o correo
               </span>
               <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />

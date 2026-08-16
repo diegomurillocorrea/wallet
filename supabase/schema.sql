@@ -65,15 +65,9 @@ create table if not exists public.budgets (
   user_id uuid not null references auth.users (id) on delete cascade,
   category_id uuid not null references public.categories (id) on delete restrict,
   credit_card_id uuid references public.credit_cards (id) on delete set null,
-  -- espejo legado; la fuente de verdad del límite está en budget_limits
-  amount_limit numeric(14, 2) not null check (amount_limit > 0),
-  -- ancla técnica legado
-  month_start date not null default '2000-01-01',
   payment_day smallint not null default 1 check (payment_day >= 1 and payment_day <= 31),
   unique (user_id, category_id)
 );
-
-create index if not exists budgets_user_month_idx on public.budgets (user_id, month_start);
 
 create index if not exists budgets_credit_card_id_idx on public.budgets (credit_card_id);
 

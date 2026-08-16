@@ -5,8 +5,49 @@
 
 :root {
   color-scheme: light dark;
-  --background: #fafafa;
-  --foreground: #18181b;
+  --butter: #ffefb3;
+  --forest: #013e37;
+  --background: #ffefb3;
+  --foreground: #013e37;
+}
+
+@theme {
+  --color-butter: #ffefb3;
+  --color-forest: #013e37;
+  --color-white: #fff9e6;
+  --color-zinc-50: #fff4d0;
+  --color-zinc-100: #ffefb3;
+  --color-zinc-200: #ead99a;
+  --color-zinc-300: #d4c07a;
+  --color-zinc-400: #c9b56e;
+  --color-zinc-500: #3d655e;
+  --color-zinc-600: #2a524c;
+  --color-zinc-700: #1a4741;
+  --color-zinc-800: #0a4a43;
+  --color-zinc-900: #013e37;
+  --color-zinc-950: #012924;
+  --color-emerald-50: #e8f3f0;
+  --color-emerald-100: #cfe6e1;
+  --color-emerald-200: #9ccdc4;
+  --color-emerald-300: #e4f5ee;
+  --color-emerald-400: #ffefb3;
+  --color-emerald-500: #025c52;
+  --color-emerald-600: #013e37;
+  --color-emerald-700: #01332e;
+  --color-emerald-800: #012821;
+  --color-emerald-900: #011c18;
+  --color-emerald-950: #011210;
+  --color-orange-50: #fff8e0;
+  --color-orange-100: #ffefb3;
+  --color-orange-200: #f5dc8a;
+  --color-orange-300: #e8c86a;
+  --color-orange-400: #d4b24a;
+  --color-orange-500: #c49a2a;
+  --color-orange-600: #9a7618;
+  --color-orange-700: #7a5c10;
+  --color-orange-800: #5c450c;
+  --color-orange-900: #3d2e08;
+  --color-orange-950: #241c04;
 }
 
 @theme inline {
@@ -17,13 +58,13 @@
 }
 
 html.dark {
-  --background: #09090b;
-  --foreground: #fafafa;
+  --background: #013e37;
+  --foreground: #ffefb3;
 }
 
 html.light {
-  --background: #fafafa;
-  --foreground: #18181b;
+  --background: #ffefb3;
+  --foreground: #013e37;
 }
 
 * {
@@ -38,5 +79,5 @@ body {
 }
 
 .focus-ring {
-  @apply outline-none ring-2 ring-emerald-500/50 ring-offset-2 ring-offset-white dark:ring-offset-zinc-900;
+  @apply outline-none ring-2 ring-forest/50 ring-offset-2 ring-offset-white dark:ring-offset-forest;
 }

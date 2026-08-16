@@ -10,7 +10,7 @@ const styles = {
     // Sizing
     'px-[calc(--spacing(3.5)-1px)] py-[calc(--spacing(2.5)-1px)] sm:px-[calc(--spacing(3)-1px)] sm:py-[calc(--spacing(1.5)-1px)] sm:text-sm/6',
     // Focus
-    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-emerald-500',
+    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-forest dark:data-focus:outline-butter',
     // Disabled
     'data-disabled:opacity-50',
     // Icon
@@ -120,8 +120,9 @@ const styles = {
       '[--btn-icon:var(--color-white)]/60 data-active:[--btn-icon:var(--color-white)]/80 data-hover:[--btn-icon:var(--color-white)]/80',
     ],
     emerald: [
-      'text-white [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-emerald-600)] [--btn-border:var(--color-emerald-700)]/90',
-      '[--btn-icon:var(--color-white)]/60 data-active:[--btn-icon:var(--color-white)]/80 data-hover:[--btn-icon:var(--color-white)]/80',
+      'text-butter [--btn-hover-overlay:var(--color-butter)]/15 [--btn-bg:var(--color-forest)] [--btn-border:var(--color-forest)]',
+      'dark:text-forest dark:[--btn-hover-overlay:var(--color-forest)]/10 dark:[--btn-bg:var(--color-butter)] dark:[--btn-border:var(--color-butter)]',
+      '[--btn-icon:var(--color-butter)] data-active:[--btn-icon:var(--color-butter)] data-hover:[--btn-icon:var(--color-butter)] dark:[--btn-icon:var(--color-forest)] dark:data-active:[--btn-icon:var(--color-forest)] dark:data-hover:[--btn-icon:var(--color-forest)]',
     ],
     teal: [
       'text-white [--btn-hover-overlay:var(--color-white)]/10 [--btn-bg:var(--color-teal-600)] [--btn-border:var(--color-teal-700)]/90',

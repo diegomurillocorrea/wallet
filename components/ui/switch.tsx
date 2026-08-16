@@ -89,8 +89,8 @@ const colors = {
     '[--switch:white] [--switch-ring:var(--color-green-700)]/90 [--switch-shadow:var(--color-green-900)]/20',
   ],
   emerald: [
-    '[--switch-bg-ring:var(--color-emerald-600)]/90 [--switch-bg:var(--color-emerald-500)] dark:[--switch-bg-ring:transparent]',
-    '[--switch:white] [--switch-ring:var(--color-emerald-600)]/90 [--switch-shadow:var(--color-emerald-900)]/20',
+    '[--switch-bg-ring:var(--color-forest)] [--switch-bg:var(--color-forest)] dark:[--switch-bg:var(--color-butter)] dark:[--switch-bg-ring:transparent]',
+    '[--switch:var(--color-butter)] [--switch-ring:var(--color-forest)] [--switch-shadow:var(--color-forest)]/20 dark:[--switch:var(--color-forest)] dark:[--switch-ring:var(--color-butter)]',
   ],
   teal: [
     '[--switch-bg-ring:var(--color-teal-700)]/90 [--switch-bg:var(--color-teal-600)] dark:[--switch-bg-ring:transparent]',
@@ -161,7 +161,7 @@ export function Switch({
         // Checked
         'data-checked:bg-(--switch-bg) data-checked:ring-(--switch-bg-ring) dark:data-checked:bg-(--switch-bg) dark:data-checked:ring-(--switch-bg-ring)',
         // Focus
-        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-emerald-500',
+        'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-forest dark:data-focus:outline-butter',
         // Hover
         'data-hover:ring-black/15 data-hover:data-checked:ring-(--switch-bg-ring)',
         'dark:data-hover:ring-white/25 dark:data-hover:data-checked:ring-(--switch-bg-ring)',

@@ -13,7 +13,7 @@ export default async function CreditCardBudgetLinksPage() {
   } = await supabase.auth.getUser()
   if (!user) return null
 
-  const groups = await getCreditCardBudgetUsage()
+  const usageResult = await getCreditCardBudgetUsage()
 
   return (
     <div className="flex flex-col gap-8">
@@ -30,7 +30,16 @@ export default async function CreditCardBudgetLinksPage() {
         </div>
       </header>
 
-      <CreditCardBudgetUsageView groups={groups} />
+      {!usageResult.ok ? (
+        <p
+          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100"
+          role="alert"
+        >
+          No se pudieron cargar los vínculos: {usageResult.error}
+        </p>
+      ) : (
+        <CreditCardBudgetUsageView groups={usageResult.groups} />
+      )}
     </div>
   )
 }

@@ -28,10 +28,6 @@ export interface BudgetRow {
   user_id: string
   category_id: string
   credit_card_id: string | null
-  /** Espejo legado; la fuente de verdad del límite está en budget_limits */
-  amount_limit: number
-  /** Ancla técnica legado; el mes de contexto viene de la cookie */
-  month_start: string
   /** Día del mes (1–31) para día de pago o revisión del presupuesto */
   payment_day: number
 }

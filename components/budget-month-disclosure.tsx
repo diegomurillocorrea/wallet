@@ -47,7 +47,7 @@ export const BudgetMonthDisclosure = ({
     <Disclosure as="div" className="py-1">
       <div className="flex items-start gap-3">
         <DisclosureButton
-          className="group flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-emerald-500"
+          className="group flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-forest dark:data-focus:outline-butter"
           aria-label={`Ver movimientos de ${budget.categoryName}, ${formatMoney(budget.spent)} de ${formatMoney(budget.limit)}`}
         >
           <span
@@ -61,7 +61,7 @@ export const BudgetMonthDisclosure = ({
               <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
                 {budget.categoryName}
               </span>
-              <ChevronDownIcon className="size-4 shrink-0 text-zinc-400 transition duration-200 group-data-open:rotate-180 dark:text-zinc-500" />
+              <ChevronDownIcon className="size-4 shrink-0 text-zinc-500 transition duration-200 group-data-open:rotate-180 dark:text-zinc-400" />
             </div>
             <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
               Día de pago <span className="tabular-nums">{dayLabel}</span>
@@ -97,7 +97,7 @@ export const BudgetMonthDisclosure = ({
         <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
           <span className="mr-1 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
             {formatMoney(budget.spent)}
-            <span className="text-zinc-400 dark:text-zinc-500"> / {formatMoney(budget.limit)}</span>
+            <span className="text-zinc-500 dark:text-zinc-400"> / {formatMoney(budget.limit)}</span>
           </span>
           {actions}
         </div>
