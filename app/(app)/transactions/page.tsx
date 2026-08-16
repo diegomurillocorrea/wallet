@@ -3,12 +3,14 @@ import { Text } from "@/components/ui/text"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
+import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
+import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { monthLabel } from "@/lib/dates/month"
 import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { formatMoney } from "@/lib/format/money"
 import { createClient } from "@/lib/supabase/server"
-import type { CategoryRow } from "@/lib/types/wallet"
+import type { CategoryRow, TransactionKind } from "@/lib/types/wallet"
 
 interface TxRow {
   id: string
@@ -16,10 +18,13 @@ interface TxRow {
   kind: string
   note: string | null
   occurred_at: string
+  category_id: string
   category: {
+    id: string
     name: string
     color: string
     icon: string
+    kind: string
   } | null
 }
 
@@ -48,7 +53,7 @@ export default async function TransactionsPage() {
 
   const { start, end, monthStart } = await getWalletAppMonthRange()
 
-  const { data: txData } = await supabase
+  const { data: txData, count } = await supabase
     .from("transactions")
     .select(
       `
@@ -57,8 +62,10 @@ export default async function TransactionsPage() {
       kind,
       note,
       occurred_at,
-      category:categories ( name, color, icon )
-    `
+      category_id,
+      category:categories ( id, name, color, icon, kind )
+    `,
+      { count: "exact" }
     )
     .eq("user_id", user.id)
     .gte("occurred_at", start)
@@ -67,11 +74,13 @@ export default async function TransactionsPage() {
     .limit(200)
 
   const rows = (txData ?? []) as unknown as TxRow[]
+  const totalCount = count ?? rows.length
+  const isTruncated = totalCount > rows.length
 
   const NO_CATEGORY_KEY = "__sin-categoria__"
   const groupsMap = new Map<string, TxGroup>()
   for (const t of rows) {
-    const key = t.category?.name ?? NO_CATEGORY_KEY
+    const key = t.category?.id ?? NO_CATEGORY_KEY
     const existing = groupsMap.get(key)
     if (existing) {
       existing.items.push(t)
@@ -94,14 +103,17 @@ export default async function TransactionsPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <Heading>Movimientos</Heading>
-        <Text className="mt-1">
-          Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen). Registro rápido abajo.
-        </Text>
+      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <Heading>Movimientos</Heading>
+          <Text className="mt-1">
+            Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen).
+          </Text>
+        </div>
+        <WalletAppMonthSelect monthStart={monthStart} />
       </header>
 
-      <TransactionQuickForm categories={categories} />
+      <TransactionQuickForm categories={categories} monthStart={start} monthEnd={end} />
 
       <section
         className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
@@ -112,10 +124,15 @@ export default async function TransactionsPage() {
         </Subheading>
         {rows.length === 0 ? (
           <Text className="mt-4">
-            No hay movimientos todavía.
+            No hay movimientos en {monthLabel(monthStart)}.
           </Text>
         ) : (
           <div className="mt-4 flex flex-col gap-6">
+            {isTruncated ? (
+              <Text>
+                Mostrando los {rows.length} más recientes de {totalCount} en este mes.
+              </Text>
+            ) : null}
             {groups.map((group) => (
               <div key={group.key}>
                 <div className="flex items-center gap-2">
@@ -153,6 +170,19 @@ export default async function TransactionsPage() {
                           {isIncome ? "+" : "-"}
                           {formatMoney(Number(t.amount))}
                         </span>
+                        <EditTransactionDialog
+                          movement={{
+                            id: t.id,
+                            amount: Number(t.amount),
+                            note: t.note,
+                            occurredAt: String(t.occurred_at).slice(0, 10),
+                            categoryId: t.category_id,
+                            kind: t.kind as TransactionKind,
+                          }}
+                          monthStart={start}
+                          monthEnd={end}
+                          categories={categories}
+                        />
                         <DeleteTransactionButton id={t.id} />
                       </li>
                     )

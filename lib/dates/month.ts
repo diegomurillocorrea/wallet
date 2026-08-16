@@ -12,9 +12,6 @@ import { todayDateInElSalvador, todayInElSalvador } from "@/lib/dates/el-salvado
 
 export const monthStartIso = (d: Date) => format(startOfMonth(d), "yyyy-MM-dd")
 
-/** Fila única `budgets.month_start` (NOT NULL en BD). El límite es por categoría; el gasto se mide con el mes de contexto. */
-export const BUDGET_DB_MONTH_ANCHOR = "2000-01-01"
-
 export const monthLabel = (monthStart: string) =>
   format(parseISO(monthStart), "MMMM yyyy", { locale: es })
 
@@ -36,6 +33,17 @@ export const clampIsoDateToRange = (candidate: string, rangeStart: string, range
   if (c < s) return s
   if (c > e) return e
   return c
+}
+
+/** Valida YYYY-MM-DD real (no solo longitud). Inválido → null */
+export const parseIsoDateStrict = (input: string | undefined): string | null => {
+  if (!input || input.length < 10) return null
+  const slice = input.slice(0, 10)
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(slice)) return null
+  const d = parseISO(slice)
+  if (Number.isNaN(d.getTime())) return null
+  if (format(d, "yyyy-MM-dd") !== slice) return null
+  return slice
 }
 
 export const previousMonthStart = (d = todayDateInElSalvador()) =>

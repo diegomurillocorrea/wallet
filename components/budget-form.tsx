@@ -14,6 +14,7 @@ import { Subheading } from "@/components/ui/heading"
 import { Text, TextLink } from "@/components/ui/text"
 import { holderShortFromCard } from "@/lib/credit-card/format"
 import { monthStartIso, paymentDateDefaultForMonth } from "@/lib/dates/month"
+import { todayDateInElSalvador } from "@/lib/dates/el-salvador"
 import type { BudgetEditTarget, CategoryRow, CreditCardListItem } from "@/lib/types/wallet"
 
 const saveBudget = async (
@@ -45,11 +46,11 @@ export const BudgetForm = ({
   const formId = useId()
 
   const defaultPaymentDate = useMemo(() => {
-    const refMonth = monthStartIso(new Date())
+    const refMonth = monthStartIso(todayDateInElSalvador())
     if (editTarget) {
       return paymentDateDefaultForMonth(refMonth, editTarget.paymentDay)
     }
-    return paymentDateDefaultForMonth(refMonth, new Date().getDate())
+    return paymentDateDefaultForMonth(refMonth, todayDateInElSalvador().getDate())
   }, [editTarget])
 
   const [state, formAction, pending] = useActionState(saveBudget, undefined as ActionResult | undefined)
@@ -78,11 +79,11 @@ export const BudgetForm = ({
       {isEdit ? (
         <Text>
           Estás editando <span className="font-medium text-zinc-700 dark:text-zinc-300">{editTarget.categoryName}</span>.
-          El límite aplica todos los meses; el avance se compara con el mes elegido en Resumen.
+          El límite se guarda para el mes en contexto; el día de pago y la tarjeta son de la definición del presupuesto.
         </Text>
       ) : (
         <Text>
-          Límite recurrente por categoría de gasto. Si ya existe para esa categoría, se actualiza.
+          Techo de gasto por categoría. El límite aplica al mes en contexto; si ya existe, se actualiza ese mes.
         </Text>
       )}
       <Field>
@@ -108,10 +109,10 @@ export const BudgetForm = ({
           name="amountLimit"
           type="number"
           inputMode="decimal"
-          min="0"
-          step="0.01"
-          required
-          defaultValue={isEdit ? editTarget.limit : undefined}
+            min="0.01"
+            step="0.01"
+            required
+            defaultValue={isEdit ? editTarget.limit : undefined}
         />
       </Field>
       <Field>
@@ -150,7 +151,7 @@ export const BudgetForm = ({
           </Select>
         )}
         <Description>
-          Referencia para saber en qué plástico cae este presupuesto cada mes.
+          Referencia visual: este techo está ligado a esta tarjeta (no es un saldo de la tarjeta).
         </Description>
       </Field>
       {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}

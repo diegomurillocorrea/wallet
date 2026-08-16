@@ -2,11 +2,18 @@
 
 import { revalidatePath } from "next/cache"
 import { z } from "zod"
-import { formatExpMmYy, normalizePanDigits, parseExpiryInput, panLast4 } from "@/lib/credit-card/format"
+import {
+  formatExpMmYy,
+  normalizePanDigits,
+  parseExpiryInput,
+  panToStoredParts,
+} from "@/lib/credit-card/format"
 import { isValidLuhnPan } from "@/lib/credit-card/luhn"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { createClient } from "@/lib/supabase/server"
 import type { ActionResult } from "@/app/(app)/actions/wallet-actions"
+import { resolveEffectiveLimit, type BudgetLimitVersion } from "@/lib/budgets/limits"
+import { roundMoney } from "@/lib/format/money"
 import type {
   BudgetLinkedToCardRow,
   CreditCardBudgetUsageGroup,
@@ -47,12 +54,16 @@ export async function createCreditCard(formData: FormData): Promise<ActionResult
   if (pan.length !== 16) return { error: "El número debe tener 16 dígitos" }
   if (!isValidLuhnPan(pan)) return { error: "El número de tarjeta no es válido" }
 
+  const parts = panToStoredParts(pan)
+  if (!parts) return { error: "El número de tarjeta no es válido" }
+
   const exp = parseExpiryInput(parsed.data.expiry)
   if (!exp) return { error: "Vencimiento inválido (usá MM/AA)" }
 
   const { error } = await supabase.from("credit_cards").insert({
     user_id: user.id,
-    pan,
+    bin: parts.bin,
+    last4: parts.last4,
     holder_first_name: parsed.data.holderName.trim(),
     holder_last_name: "",
     exp_month: exp.expMonth,
@@ -60,7 +71,12 @@ export async function createCreditCard(formData: FormData): Promise<ActionResult
     updated_at: new Date().toISOString(),
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Ya tenés registrada una tarjeta con esos dígitos" }
+    }
+    return { error: error.message }
+  }
   revalidateCreditCardPaths()
   return { success: true }
 }
@@ -95,20 +111,24 @@ export async function updateCreditCard(formData: FormData): Promise<ActionResult
 
   const { data: existing } = await supabase
     .from("credit_cards")
-    .select("id, pan")
+    .select("id, bin, last4")
     .eq("id", parsed.data.creditCardId)
     .eq("user_id", user.id)
     .maybeSingle()
 
   if (!existing?.id) return { error: "Tarjeta no encontrada" }
 
-  let pan = existing.pan as string
+  let bin = existing.bin as string
+  let last4 = existing.last4 as string
   const rawPan = parsed.data.pan != null ? String(parsed.data.pan).trim() : ""
   if (rawPan !== "") {
     const next = normalizePanDigits(rawPan)
     if (next.length !== 16) return { error: "El número debe tener 16 dígitos" }
     if (!isValidLuhnPan(next)) return { error: "El número de tarjeta no es válido" }
-    pan = next
+    const parts = panToStoredParts(next)
+    if (!parts) return { error: "El número de tarjeta no es válido" }
+    bin = parts.bin
+    last4 = parts.last4
   }
 
   const exp = parseExpiryInput(parsed.data.expiry)
@@ -117,7 +137,8 @@ export async function updateCreditCard(formData: FormData): Promise<ActionResult
   const { error } = await supabase
     .from("credit_cards")
     .update({
-      pan,
+      bin,
+      last4,
       holder_first_name: parsed.data.holderName.trim(),
       holder_last_name: "",
       exp_month: exp.expMonth,
@@ -127,7 +148,12 @@ export async function updateCreditCard(formData: FormData): Promise<ActionResult
     .eq("id", parsed.data.creditCardId)
     .eq("user_id", user.id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Ya tenés registrada una tarjeta con esos dígitos" }
+    }
+    return { error: error.message }
+  }
   revalidateCreditCardPaths()
   return { success: true }
 }
@@ -153,6 +179,14 @@ export async function deleteCreditCard(id: string): Promise<ActionResult> {
     }
   }
 
+  const { data: existing } = await supabase
+    .from("credit_cards")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!existing) return { error: "Tarjeta no encontrada" }
+
   const { error } = await supabase.from("credit_cards").delete().eq("id", id).eq("user_id", user.id)
 
   if (error) return { error: error.message }
@@ -162,7 +196,8 @@ export async function deleteCreditCard(id: string): Promise<ActionResult> {
 
 const rowToListItem = (row: {
   id: string
-  pan: string
+  bin: string
+  last4: string
   holder_first_name: string
   holder_last_name: string
   exp_month: number
@@ -171,7 +206,8 @@ const rowToListItem = (row: {
   id: row.id,
   holder_first_name: row.holder_first_name,
   holder_last_name: row.holder_last_name,
-  last4: panLast4(row.pan),
+  bin: row.bin,
+  last4: row.last4,
   exp_month: row.exp_month,
   exp_year: row.exp_year,
   exp_label: formatExpMmYy(row.exp_month, row.exp_year),
@@ -186,11 +222,14 @@ export async function listCreditCardsForUser(): Promise<CreditCardListItem[]> {
 
   const { data, error } = await supabase
     .from("credit_cards")
-    .select("id, pan, holder_first_name, holder_last_name, exp_month, exp_year")
+    .select("id, bin, last4, holder_first_name, holder_last_name, exp_month, exp_year")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
 
-  if (error) return []
+  if (error) {
+    console.error("listCreditCardsForUser", error.message)
+    return []
+  }
   if (!data?.length) return []
   return data.map(rowToListItem)
 }
@@ -212,7 +251,6 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     .select(
       `
       id,
-      amount_limit,
       payment_day,
       credit_card_id,
       category:categories ( id, name, color, icon )
@@ -222,12 +260,31 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
     .not("credit_card_id", "is", null)
 
   if (error) {
+    console.error("getCreditCardBudgetUsage", error.message)
     return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
   }
 
   const rows = budgetRows ?? []
   if (rows.length === 0) {
     return cards.map((card) => ({ card, budgets: [], totalSpentOnCard: 0 }))
+  }
+
+  const budgetIds = rows.map((b) => b.id as string)
+  const { data: limitRows } = await supabase
+    .from("budget_limits")
+    .select("budget_id, month_start, amount_limit")
+    .in("budget_id", budgetIds)
+    .order("month_start", { ascending: true })
+
+  const versionsByBudget = new Map<string, BudgetLimitVersion[]>()
+  for (const row of limitRows ?? []) {
+    const bid = row.budget_id as string
+    const list = versionsByBudget.get(bid) ?? []
+    list.push({
+      monthStart: String(row.month_start).slice(0, 10),
+      amountLimit: Number(row.amount_limit),
+    })
+    versionsByBudget.set(bid, list)
   }
 
   const { data: tx } = await supabase
@@ -242,7 +299,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
   for (const t of tx ?? []) {
     const cid = t.category_id as string
     const prev = spentByCategory.get(cid) ?? 0
-    spentByCategory.set(cid, prev + Number(t.amount))
+    spentByCategory.set(cid, roundMoney(prev + Number(t.amount)))
   }
 
   const byCard = new Map<string, BudgetLinkedToCardRow[]>()
@@ -261,6 +318,11 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
       | null
       | undefined
     if (!cat?.id) continue
+
+    const versions = versionsByBudget.get(b.id as string) ?? []
+    const amountLimit = resolveEffectiveLimit(versions, monthStart)
+    if (amountLimit == null) continue
+
     const spent = spentByCategory.get(cat.id) ?? 0
     const row: BudgetLinkedToCardRow = {
       budgetId: b.id as string,
@@ -268,7 +330,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
       categoryName: cat.name,
       color: cat.color,
       icon: cat.icon,
-      amountLimit: Number(b.amount_limit),
+      amountLimit,
       spent,
       monthStart,
       paymentDay: Math.min(31, Math.max(1, Number(b.payment_day) || 1)),
@@ -284,7 +346,7 @@ export async function getCreditCardBudgetUsage(): Promise<CreditCardBudgetUsageG
 
   return cards.map((card) => {
     const budgets = byCard.get(card.id) ?? []
-    const totalSpentOnCard = budgets.reduce((sum, r) => sum + r.spent, 0)
+    const totalSpentOnCard = roundMoney(budgets.reduce((sum, r) => sum + r.spent, 0))
     return { card, budgets, totalSpentOnCard }
   })
 }

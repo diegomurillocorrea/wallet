@@ -1,140 +1,75 @@
-# Especificación: módulo de tarjetas de crédito y vínculo con presupuestos
+# Especificación: presupuestos, tarjetas y límites por mes
 
-## 1. Objetivo del producto
+Documento vivo del modelo de negocio de DAIEGO Wallet.
 
-Permitir registrar **tarjetas de crédito** como entidades reutilizables y **asociar cada presupuesto mensual** (categoría + mes + día de pago) a la tarjeta con la que se espera que se cargue el gasto recurrente o el “autopago” mental. Así, en la vista de presupuestos queda claro **a qué plástico corresponde cada carga mensual**, sin confundir tarjetas cuando hay varias.
+## 1. Objetivo
 
-## 2. Contexto del proyecto actual
+Controlar techos de gasto por categoría, con límite versionado por mes, y etiquetar visualmente qué presupuestos están ligados a qué tarjeta. No es un libro de la tarjeta ni un estado “pagado”.
 
-- **Backend:** Supabase (Postgres + RLS + `auth.users`).
-- **Presupuestos:** tabla `public.budgets` con `user_id`, `category_id`, `amount_limit`, `month_start`, `payment_day` (1–31). Unicidad `(user_id, category_id, month_start)`.
-- **App:** Next.js App Router, Server Actions en `app/(app)/actions/wallet-actions.ts`, tipos en `lib/types/wallet.ts`, UI presupuestos en `app/(app)/budgets`, shell en `components/app-shell.tsx`.
+## 2. Modelo de dominio
 
-Este módulo se apoya en ese modelo: **un presupuesto puede referenciar opcionalmente una tarjeta**.
+### 2.1 Presupuesto = techo de gasto
 
-## 3. Alcance funcional
+- Una definición por `(usuario, categoría de gasto)`: día de pago + tarjeta opcional.
+- El **límite** vive en `budget_limits` por mes (`month_start` = día 1).
+- Si no hay fila para el mes en contexto, se hereda la última versión con `month_start <=` ese mes.
+- Si el mes en contexto es **anterior** a la primera versión, el presupuesto **no se muestra**.
 
-### 3.1 Registrar y gestionar tarjetas
+### 2.2 Edición del límite
 
-- **Crear** tarjeta con:
-  - **Número:** 16 dígitos (solo dígitos; validación de longitud y, opcionalmente, algoritmo de Luhn en fase 2).
-  - **Titular:** nombre y apellido (texto; se puede guardar en un solo campo `holder_name` o `first_name` + `last_name` según convenga en implementación).
-  - **Vencimiento:** mes y año en formato lógico **MM/AA** (en BD: `exp_month` smallint 1–12, `exp_year` smallint 0–99 o año completo 2000+; se documenta en migración).
-- **Listar** tarjetas del usuario (en listados **no** mostrar los 16 dígitos completos; ver §5).
-- **Editar** y **eliminar** tarjeta propia.
-- **Eliminar con política:** si una tarjeta está vinculada a presupuestos, decidir en implementación:
-  - **Opción A (recomendada):** impedir borrado y pedir desvincular desde presupuestos.
-  - **Opción B:** borrado en cascada del FK en presupuestos → `credit_card_id` pasa a `NULL`.
+Con “hoy” = mes calendario actual (El Salvador):
 
-### 3.2 Vincular tarjeta ↔ presupuestos
+- Mes seleccionado **pasado**: solo cambia ese mes. Si el mes siguiente no tiene fila propia, se materializa el valor previo para no contaminar el presente.
+- Mes seleccionado **actual o futuro**: upsert de ese mes; meses posteriores con versión propia no se tocan.
 
-- Cada fila de `budgets` puede tener **como máximo una** tarjeta asociada (`credit_card_id` nullable).
-- Semántica: “el límite / revisión de este presupuesto para este mes se concibe como cargado (o revisado) en esta tarjeta el día `payment_day`”.
-- En **formulario de presupuesto** (`BudgetForm`): selector opcional “Tarjeta (opcional)” con lista de tarjetas del usuario + opción “Sin tarjeta”.
-- En **lista Estado del mes** (`BudgetsWorkspace`): mostrar una línea secundaria o badge con **identificador seguro** de tarjeta (ej. últimos 4 + marca si existe en fase 2) y titular abreviado si aplica.
+### 2.3 Registrar gasto
 
-### 3.3 Navegación
+El botón del presupuesto crea un **movimiento de gasto** en esa categoría (suma al techo). Pasarse del límite se permite y se marca “sobre el límite”.
 
-- Nueva ruta dedicada, por ejemplo **`/credit-cards`**, enlazada desde el **sidebar** (`app-shell`) junto a Presupuestos / Dashboard.
-- Contenido mínimo de la página: listado + acciones crear/editar/eliminar (diálogos o formularios coherentes con el resto de la app).
+### 2.4 Tarjeta = etiqueta visual
 
-## 4. Modelo de datos propuesto
+- `credit_card_id` en `budgets` es opcional.
+- Semántica: “este techo está ligado a este plástico”.
+- La vista “Presupuestos por tarjeta” agrupa por etiqueta; **no** es el saldo de la tarjeta.
+- No hay `credit_card_id` en movimientos ni estado “pagado”.
 
-### 4.1 Tabla `public.credit_cards`
+### 2.5 Categorías
 
-| Columna        | Tipo        | Notas |
-|----------------|------------|--------|
-| `id`           | `uuid` PK  | `gen_random_uuid()` |
-| `user_id`      | `uuid` FK  | `auth.users(id)` ON DELETE CASCADE |
-| `pan`          | `text`     | 16 dígitos; ver **§5 seguridad** y tratamiento en UI |
-| `holder_first_name` | `text` | obligatorio |
-| `holder_last_name`  | `text` | obligatorio |
-| `exp_month`    | `smallint` | 1–12 |
-| `exp_year`     | `smallint` | Año calendario (ej. 2028) o convención única documentada |
-| `created_at`   | `timestamptz` | default `now()` |
-| `updated_at`   | `timestamptz` | opcional, triggers o app |
+- Unique `(user_id, lower(trim(name)), kind)`.
+- No se cambia `kind` si hay movimientos o presupuesto.
+- No se borra si hay presupuesto (`ON DELETE RESTRICT`); hay que eliminar el presupuesto primero.
+- Seed de categorías por defecto una sola vez (`user_settings.default_categories_seeded`). Si el usuario las borra todas, no se re-crean solas.
 
-Índices: `(user_id)`, opcional único de negocio si en el futuro se deduplica por usuario (no obligatorio en v1).
+### 2.6 Movimientos
 
-**RLS:** políticas análogas a `budgets` / `categories` — solo el dueño (`auth.uid() = user_id`) puede CRUD.
+- `kind` debe coincidir con la categoría (app + trigger).
+- Al editar, se puede cambiar a otra categoría del **mismo tipo**.
+- Fechas en zona `America/El_Salvador`; el alta rápida se acota al mes en contexto.
 
-### 4.2 Cambio en `public.budgets`
+## 3. Tarjetas (seguridad)
 
-- Añadir `credit_card_id uuid references public.credit_cards(id) on delete set null` (o `restrict` si se elige Opción A de borrado).
-- Nullable: presupuestos existentes siguen válidos sin tarjeta.
+- **No se persiste el PAN completo.** Solo `bin` (6) + `last4` (4).
+- En el formulario se piden 16 dígitos y se valida Luhn; se descarta el resto.
+- Borrar tarjeta bloqueado si está vinculada a presupuestos (desvincular primero).
+- Unique `(user_id, bin, last4)`.
 
-### 4.3 Migraciones
+## 4. Día de pago
 
-- Nuevo archivo SQL en `supabase/migrations/` con `create table`, RLS, políticas y `alter table budgets`.
-- Actualizar `supabase/schema.sql` de referencia para quien bootstrap desde cero.
+- Se guarda `payment_day` 1–31 en la definición del presupuesto.
+- En meses cortos, se interpreta y muestra como **último día del mes**.
 
-## 5. Seguridad y cumplimiento (obligatorio en el diseño)
+## 5. Mes de contexto
 
-Almacenar el **PAN completo (16 dígitos)** en base de datos implica **riesgo elevado** (filtración de backups, logs, XSS, insider). Desde el punto de vista **PCI DSS**, conservar datos de titular de cuenta en servidores propios suele acarrear obligaciones fuertes.
+Cookie `wallet_app_month`. Misma cookie en Resumen, Presupuestos, Movimientos y Vínculos.
 
-**Recomendaciones para el spec (decisión de producto antes o durante implementación):**
+## 6. Fuera de alcance (v1)
 
-1. **Mínimo viable seguro:** guardar solo **últimos 4** + opcionalmente **primeros 6 (BIN)** para reconocer banco/red; el resto no persistir. Si el producto exige “tener los 16”, valorar **cifrado aplicación-nivel** (clave fuera de BD) o almacenamiento externo certificado — documentar la opción elegida en README interno, no en este spec salvo una línea.
-2. **En UI:** campo de número tipo password / máscara inmediata después de blur; nunca volver a mostrar 16 dígitos completos en pantalla tras guardar.
-3. **Logs y errores:** nunca registrar el PAN en logs del servidor o del cliente.
-4. **Transporte:** solo HTTPS (ya asumido en producción).
+Cuentas bancarias, recurrentes automáticos, recordatorios, metas, Open Banking, IA, cifrado de PAN, estado “pagado” en tarjeta, medio de pago en el movimiento.
 
-El spec de implementación **asume** que el usuario quiere el flujo “16 dígitos en alta”, pero la **tarea de implementación** debe incluir explícitamente la elección entre almacenamiento completo vs truncado/cifrado, acorde a la tolerancia al riesgo del proyecto.
+## 7. Migraciones relevantes
 
-## 6. Capa de aplicación
+- `20260815180000_budget_limits_per_month.sql`
+- `20260815180100_integrity_categories_budgets.sql`
+- `20260815180200_credit_cards_bin_last4.sql`
 
-### 6.1 Tipos TypeScript
-
-- En `lib/types/wallet.ts` (o módulo dedicado): `CreditCardRow`, campos serializables servidor → cliente **sin** exponer `pan` completo en props de listado; usar `last4` derivado en consulta o columna generada / vista.
-
-### 6.2 Server Actions
-
-- Extender `wallet-actions.ts` (o archivo dedicado `credit-card-actions.ts` si se prefiere separar):
-  - `createCreditCard`, `updateCreditCard`, `deleteCreditCard`, `listCreditCardsForUser`.
-- Extender `upsertBudget` / `updateBudget`:
-  - Aceptar `creditCardId` opcional desde `FormData`.
-  - Validar con Zod: UUID opcional; si viene, comprobar que la tarjeta pertenece al `user.id`.
-
-### 6.3 Consultas de presupuestos
-
-- `getBudgetAlertsForUser` (y cualquier select de presupuestos para edición): join o select anidado para traer `last4`, `holder` resumido, `exp_month`/`exp_year` para mostrar “vence MM/AA”.
-
-## 7. UI / UX
-
-- **Tarjetas:** formulario accesible (labels, `aria-*`, teclado), inputs con `inputMode="numeric"`, máscaras de fecha MM/AA.
-- **Presupuestos:** select con nombres legibles (“Visa •••• 4242 — Juan P.”).
-- **Vacío:** CTA para ir a crear tarjeta si no hay ninguna.
-- Estilo: alineado a DAIEGO (zinc / emerald, patrones existentes en formularios).
-
-## 8. Fases de entrega sugeridas
-
-| Fase | Contenido |
-|------|-----------|
-| **Fase 0** | Decisión escrita: PAN completo vs solo últimos 4 (+ BIN) vs cifrado. |
-| **Fase 1** | Migración BD + RLS + tipos + actions CRUD tarjetas + página `/credit-cards`. |
-| **Fase 2** | FK en `budgets`, formulario y queries de presupuestos + badges en “Estado del mes”. |
-| **Fase 3** | Pulido: Luhn opcional, etiqueta personalizada por tarjeta (“Azul trabajo”), icono de red si hay BIN. |
-
-## 9. Criterios de aceptación (resumen)
-
-- Un usuario autenticado solo ve y modifica sus propias tarjetas (RLS + comprobaciones en actions).
-- Se puede crear presupuesto con o sin tarjeta; al editar, se conserva o actualiza la asociación.
-- En listado de presupuestos del mes se indica claramente qué tarjeta (representación segura) acompaña a cada ítem cuando existe vínculo.
-- No hay fugas del PAN completo en respuestas JSON usadas para renderizar listas.
-
-## 10. Fuera de alcance (v1)
-
-- Integración con bancos u Open Banking.
-- Recordatorios push/email de vencimiento de tarjeta.
-- Conciliación automática con transacciones importadas (posible **fase futura**: sugerir transacciones que “parecen” de una tarjeta por nota o reglas).
-
-## 11. Checklist previo a implementación
-
-- [ ] Decisión PAN / truncado / cifrado (§5).
-- [ ] Política ON DELETE de `credit_card_id` (§3.1).
-- [ ] Año de expiración: convención única en BD (§4.1).
-- [ ] Copia legal / aviso breve en pantalla de alta de tarjeta (riesgo, uso personal).
-
----
-
-*Documento vivo: actualizar este `spec.md` si cambian requisitos de seguridad o el modelo de vínculo (p. ej. varias tarjetas por presupuesto vía tabla puente).*
+*Actualizar este documento si cambia el modelo.*

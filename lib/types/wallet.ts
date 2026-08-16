@@ -28,10 +28,19 @@ export interface BudgetRow {
   user_id: string
   category_id: string
   credit_card_id: string | null
+  /** Espejo legado; la fuente de verdad del límite está en budget_limits */
   amount_limit: number
+  /** Ancla técnica legado; el mes de contexto viene de la cookie */
   month_start: string
   /** Día del mes (1–31) para día de pago o revisión del presupuesto */
   payment_day: number
+}
+
+export interface BudgetLimitRow {
+  id: string
+  budget_id: string
+  month_start: string
+  amount_limit: number
 }
 
 /** Tarjeta serializable a cliente (sin PAN completo) */
@@ -39,6 +48,7 @@ export interface CreditCardListItem {
   id: string
   holder_first_name: string
   holder_last_name: string
+  bin: string
   last4: string
   exp_month: number
   exp_year: number
@@ -89,6 +99,8 @@ export interface BudgetCategoryMovement {
   amount: number
   note: string | null
   occurredAt: string
+  categoryId?: string
+  kind?: TransactionKind
 }
 
 /** Fila de alerta / lista de presupuestos del mes (serializable servidor → cliente) */

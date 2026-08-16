@@ -18,6 +18,7 @@ interface BudgetsWorkspaceProps {
   budgets: BudgetAlertRow[]
   defaultPaymentMonthStart: string
   defaultPaymentMonthEnd: string
+  allCategories: CategoryRow[]
 }
 
 export const BudgetsWorkspace = ({
@@ -26,6 +27,7 @@ export const BudgetsWorkspace = ({
   budgets,
   defaultPaymentMonthStart,
   defaultPaymentMonthEnd,
+  allCategories,
 }: BudgetsWorkspaceProps) => {
   const [editTarget, setEditTarget] = useState<BudgetEditTarget | null>(null)
   const formAnchorRef = useRef<HTMLDivElement>(null)
@@ -77,7 +79,7 @@ export const BudgetsWorkspace = ({
         aria-labelledby="budget-list-heading"
       >
           <Subheading id="budget-list-heading" level={2}>
-          Avance vs el mes en Resumen
+          Avance vs el mes en contexto
         </Subheading>
         {budgets.length === 0 ? (
           <Text className="mt-4">
@@ -114,6 +116,7 @@ export const BudgetsWorkspace = ({
                     budget={b}
                     monthStart={defaultPaymentMonthStart}
                     monthEnd={defaultPaymentMonthEnd}
+                    categories={allCategories}
                     actions={
                       <>
                         <RegisterBudgetPaymentDialog

@@ -9,14 +9,22 @@ import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
 import { Subheading } from "@/components/ui/heading"
 import { Text } from "@/components/ui/text"
+import { clampIsoDateToRange } from "@/lib/dates/month"
 import { todayInElSalvador } from "@/lib/dates/el-salvador"
 import type { CategoryRow, TransactionKind } from "@/lib/types/wallet"
 
 interface TransactionQuickFormProps {
   categories: CategoryRow[]
+  /** Rango del mes en contexto: acota la fecha del movimiento */
+  monthStart?: string
+  monthEnd?: string
 }
 
-export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) => {
+export const TransactionQuickForm = ({
+  categories,
+  monthStart,
+  monthEnd,
+}: TransactionQuickFormProps) => {
   const [kind, setKind] = useState<TransactionKind>("expense")
   const [state, formAction, pending] = useActionState(
     async (_: ActionResult | undefined, fd: FormData) => addTransaction(fd),
@@ -28,7 +36,13 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
     [categories, kind]
   )
 
-  const today = useMemo(() => todayInElSalvador(), [])
+  const constrainToMonth = Boolean(monthStart && monthEnd)
+
+  const defaultDate = useMemo(() => {
+    const today = todayInElSalvador()
+    if (monthStart && monthEnd) return clampIsoDateToRange(today, monthStart, monthEnd)
+    return today
+  }, [monthStart, monthEnd])
 
   return (
     <section
@@ -38,7 +52,10 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
       <Subheading id="quick-add-heading" level={2}>
         Registrar movimiento
       </Subheading>
-      <Text className="mt-1">Gasto o ingreso en pocos segundos.</Text>
+      <Text className="mt-1">
+        Gasto o ingreso en pocos segundos
+        {constrainToMonth ? " · la fecha queda en el mes en contexto" : ""}.
+      </Text>
 
       <div className="mt-4">
         <KindToggle
@@ -50,6 +67,7 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
 
       <form action={formAction} className="mt-4 flex flex-col gap-4">
         <input type="hidden" name="kind" value={kind} />
+        {constrainToMonth ? <input type="hidden" name="constrainToAppMonth" value="1" /> : null}
 
         <Field>
           <Label className="sr-only">Categoría</Label>
@@ -70,7 +88,7 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             name="amount"
             type="number"
             inputMode="decimal"
-            min="0"
+            min="0.01"
             step="0.01"
             required
             placeholder="Monto"
@@ -94,7 +112,10 @@ export const TransactionQuickForm = ({ categories }: TransactionQuickFormProps) 
             id="occurredAt"
             name="occurredAt"
             type="date"
-            defaultValue={today}
+            defaultValue={defaultDate}
+            min={monthStart}
+            max={monthEnd}
+            required
           />
         </Field>
 

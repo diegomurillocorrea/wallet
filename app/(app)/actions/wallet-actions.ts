@@ -7,15 +7,21 @@ import { createClient } from "@/lib/supabase/server"
 import type { BudgetAlertRow, BudgetCategoryMovement } from "@/lib/types/wallet"
 import { DEFAULT_CATEGORIES } from "@/lib/data/default-categories"
 import {
-  BUDGET_DB_MONTH_ANCHOR,
   clampIsoDateToRange,
   normalizeMonthStartInput,
+  parseIsoDateStrict,
   parsePaymentDayFromDateInput,
 } from "@/lib/dates/month"
 import { getWalletAppMonthRange, WALLET_APP_MONTH_COOKIE } from "@/lib/dates/wallet-app-month"
 import { todayInElSalvador } from "@/lib/dates/el-salvador"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
-import { formatExpMmYy, holderShortFromCard, panLast4 } from "@/lib/credit-card/format"
+import { formatExpMmYy, holderShortFromCard } from "@/lib/credit-card/format"
+import { isValidMoneyAmount, roundMoney } from "@/lib/format/money"
+import {
+  planLimitEdit,
+  resolveEffectiveLimit,
+  type BudgetLimitVersion,
+} from "@/lib/budgets/limits"
 
 const parseCreditCardIdFromForm = (fd: FormData): string | undefined => {
   const v = fd.get("creditCardId")
@@ -40,6 +46,80 @@ const resolveOwnedCreditCardId = async (
   return raw
 }
 
+const moneySchema = z.coerce
+  .number()
+  .refine((n) => isValidMoneyAmount(n), "El monto debe ser mayor a 0, con máximo 2 decimales")
+
+const fetchBudgetLimitVersions = async (
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  budgetIds: string[]
+): Promise<Map<string, BudgetLimitVersion[]>> => {
+  const map = new Map<string, BudgetLimitVersion[]>()
+  if (budgetIds.length === 0) return map
+  const { data } = await supabase
+    .from("budget_limits")
+    .select("budget_id, month_start, amount_limit")
+    .in("budget_id", budgetIds)
+    .order("month_start", { ascending: true })
+  for (const row of data ?? []) {
+    const bid = row.budget_id as string
+    const list = map.get(bid) ?? []
+    list.push({
+      monthStart: String(row.month_start).slice(0, 10),
+      amountLimit: Number(row.amount_limit),
+    })
+    map.set(bid, list)
+  }
+  return map
+}
+
+const upsertBudgetLimitRows = async (
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  budgetId: string,
+  upserts: BudgetLimitVersion[]
+): Promise<{ error?: string }> => {
+  for (const u of upserts) {
+    const { data: existing } = await supabase
+      .from("budget_limits")
+      .select("id")
+      .eq("budget_id", budgetId)
+      .eq("month_start", u.monthStart)
+      .maybeSingle()
+
+    if (existing?.id) {
+      const { error } = await supabase
+        .from("budget_limits")
+        .update({ amount_limit: u.amountLimit })
+        .eq("id", existing.id)
+      if (error) return { error: error.message }
+    } else {
+      const { error } = await supabase.from("budget_limits").insert({
+        budget_id: budgetId,
+        month_start: u.monthStart,
+        amount_limit: u.amountLimit,
+      })
+      if (error) return { error: error.message }
+    }
+  }
+  return {}
+}
+
+const syncBudgetMirrorAmount = async (
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  budgetId: string,
+  userId: string,
+  amountLimit: number
+) => {
+  await supabase
+    .from("budgets")
+    .update({
+      amount_limit: amountLimit,
+      month_start: "2000-01-01",
+    })
+    .eq("id", budgetId)
+    .eq("user_id", userId)
+}
+
 export async function ensureDefaultCategories() {
   const supabase = await createClient()
   const {
@@ -49,26 +129,46 @@ export async function ensureDefaultCategories() {
 
   await supabase.from("categories").update({ is_system: false }).eq("user_id", user.id).eq("is_system", true)
 
+  const { data: settings } = await supabase
+    .from("user_settings")
+    .select("default_categories_seeded")
+    .eq("user_id", user.id)
+    .maybeSingle()
+
+  if (settings?.default_categories_seeded) return
+
   const { count, error: countError } = await supabase
     .from("categories")
     .select("id", { count: "exact", head: true })
     .eq("user_id", user.id)
   if (countError) return
-  if (count && count > 0) return
-  const rows = DEFAULT_CATEGORIES.map((c) => ({
-    name: c.name,
-    kind: c.kind,
-    color: c.color,
-    icon: c.icon,
-    user_id: user.id,
-    is_system: false,
-  }))
-  await supabase.from("categories").insert(rows)
+
+  if (!count || count === 0) {
+    const rows = DEFAULT_CATEGORIES.map((c) => ({
+      name: c.name,
+      kind: c.kind,
+      color: c.color,
+      icon: c.icon,
+      user_id: user.id,
+      is_system: false,
+    }))
+    const { error: insertError } = await supabase.from("categories").insert(rows)
+    if (insertError) return
+  }
+
+  await supabase.from("user_settings").upsert(
+    {
+      user_id: user.id,
+      default_categories_seeded: true,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "user_id" }
+  )
 }
 
 const transactionSchema = z.object({
   categoryId: z.string().uuid(),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  amount: moneySchema,
   kind: z.enum(["expense", "income"]),
   note: z.string().max(500).optional(),
   occurredAt: z.string().optional(),
@@ -106,12 +206,20 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
     return { error: "La categoría no coincide con el tipo de movimiento" }
   }
 
-  let occurred =
-    parsed.data.occurredAt && parsed.data.occurredAt.length >= 10
-      ? parsed.data.occurredAt.slice(0, 10)
-      : todayInElSalvador()
+  let occurred: string
+  if (parsed.data.occurredAt) {
+    const strict = parseIsoDateStrict(parsed.data.occurredAt)
+    if (!strict) return { error: "La fecha no es válida" }
+    occurred = strict
+  } else {
+    occurred = todayInElSalvador()
+  }
 
-  if (formData.get("constrainToAppMonth") === "1") {
+  const constrain =
+    formData.get("constrainToAppMonth") === "1" ||
+    formData.get("constrainToAppMonth") === "true"
+
+  if (constrain) {
     const { start, end } = await getWalletAppMonthRange()
     occurred = clampIsoDateToRange(occurred, start, end)
   }
@@ -119,7 +227,7 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
   const { error } = await supabase.from("transactions").insert({
     user_id: user.id,
     category_id: parsed.data.categoryId,
-    amount: parsed.data.amount,
+    amount: roundMoney(parsed.data.amount),
     kind: parsed.data.kind,
     note: parsed.data.note?.trim() || null,
     occurred_at: occurred,
@@ -130,14 +238,16 @@ export async function addTransaction(formData: FormData): Promise<ActionResult> 
   revalidatePath("/dashboard")
   revalidatePath("/transactions")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
 const updateTransactionSchema = z.object({
   transactionId: z.string().uuid(),
-  amount: z.coerce.number().positive("El monto debe ser mayor a 0"),
+  amount: moneySchema,
   note: z.string().max(500).optional(),
   occurredAt: z.string().optional(),
+  categoryId: z.string().uuid().optional(),
 })
 
 export async function updateTransaction(formData: FormData): Promise<ActionResult> {
@@ -147,11 +257,16 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
   } = await supabase.auth.getUser()
   if (!user) return { error: "No autenticado" }
 
+  const rawCategoryId = formData.get("categoryId")
   const parsed = updateTransactionSchema.safeParse({
     transactionId: formData.get("transactionId"),
     amount: formData.get("amount"),
     note: formData.get("note") || undefined,
     occurredAt: formData.get("occurredAt") || undefined,
+    categoryId:
+      rawCategoryId != null && String(rawCategoryId).trim() !== ""
+        ? String(rawCategoryId)
+        : undefined,
   })
   if (!parsed.success) {
     const msg = Object.values(parsed.error.flatten().fieldErrors).flat()[0]
@@ -160,16 +275,36 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
 
   const { data: existing } = await supabase
     .from("transactions")
-    .select("id")
+    .select("id, kind, category_id, occurred_at")
     .eq("id", parsed.data.transactionId)
     .eq("user_id", user.id)
     .maybeSingle()
   if (!existing) return { error: "Movimiento no encontrado" }
 
-  let occurred =
-    parsed.data.occurredAt && parsed.data.occurredAt.length >= 10
-      ? parsed.data.occurredAt.slice(0, 10)
-      : todayInElSalvador()
+  let categoryId = existing.category_id as string
+  let kind = existing.kind as string
+
+  if (parsed.data.categoryId) {
+    const { data: cat } = await supabase
+      .from("categories")
+      .select("id, kind")
+      .eq("id", parsed.data.categoryId)
+      .eq("user_id", user.id)
+      .maybeSingle()
+    if (!cat) return { error: "Categoría no encontrada" }
+    if (cat.kind !== existing.kind) {
+      return { error: "La categoría debe ser del mismo tipo que el movimiento" }
+    }
+    categoryId = cat.id
+    kind = cat.kind
+  }
+
+  let occurred = String(existing.occurred_at).slice(0, 10)
+  if (parsed.data.occurredAt) {
+    const strict = parseIsoDateStrict(parsed.data.occurredAt)
+    if (!strict) return { error: "La fecha no es válida" }
+    occurred = strict
+  }
 
   if (formData.get("constrainToAppMonth") === "1") {
     const { start, end } = await getWalletAppMonthRange()
@@ -179,9 +314,11 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
   const { error: updateError } = await supabase
     .from("transactions")
     .update({
-      amount: parsed.data.amount,
+      amount: roundMoney(parsed.data.amount),
       note: parsed.data.note?.trim() || null,
       occurred_at: occurred,
+      category_id: categoryId,
+      kind,
     })
     .eq("id", parsed.data.transactionId)
     .eq("user_id", user.id)
@@ -191,6 +328,7 @@ export async function updateTransaction(formData: FormData): Promise<ActionResul
   revalidatePath("/dashboard")
   revalidatePath("/transactions")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
@@ -200,6 +338,14 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) return { error: "No autenticado" }
+
+  const { data: existing } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!existing) return { error: "Movimiento no encontrado" }
 
   const { error } = await supabase
     .from("transactions")
@@ -211,6 +357,7 @@ export async function deleteTransaction(id: string): Promise<ActionResult> {
   revalidatePath("/dashboard")
   revalidatePath("/transactions")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
@@ -256,7 +403,12 @@ export async function addCategory(formData: FormData): Promise<ActionResult> {
     is_system: false,
   })
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Ya existe una categoría con ese nombre y tipo" }
+    }
+    return { error: error.message }
+  }
   revalidatePath("/categories")
   revalidatePath("/transactions")
   revalidatePath("/dashboard")
@@ -274,6 +426,18 @@ export async function deleteCategory(id: string): Promise<ActionResult> {
   const { data: row } = await supabase.from("categories").select("id").eq("id", id).eq("user_id", user.id).single()
 
   if (!row) return { error: "Categoría no encontrada" }
+
+  const { count: budgetCount } = await supabase
+    .from("budgets")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .eq("category_id", id)
+
+  if (budgetCount != null && budgetCount > 0) {
+    return {
+      error: "Hay un presupuesto con esta categoría. Eliminalo desde Presupuestos primero.",
+    }
+  }
 
   const { error } = await supabase
     .from("categories")
@@ -323,12 +487,31 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
 
   const { data: existing } = await supabase
     .from("categories")
-    .select("id")
+    .select("id, kind")
     .eq("id", parsed.data.id)
     .eq("user_id", user.id)
     .single()
 
   if (!existing) return { error: "Categoría no encontrada" }
+
+  if (existing.kind !== parsed.data.kind) {
+    const { count: txCount } = await supabase
+      .from("transactions")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("category_id", parsed.data.id)
+    if (txCount != null && txCount > 0) {
+      return { error: "No se puede cambiar el tipo: hay movimientos con esta categoría" }
+    }
+    const { count: budgetCount } = await supabase
+      .from("budgets")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", user.id)
+      .eq("category_id", parsed.data.id)
+    if (budgetCount != null && budgetCount > 0) {
+      return { error: "No se puede cambiar el tipo: hay un presupuesto con esta categoría" }
+    }
+  }
 
   const iconKey = resolveCategoryIconKey(parsed.data.icon)
   if (!iconKey) {
@@ -349,7 +532,12 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
     .eq("id", parsed.data.id)
     .eq("user_id", user.id)
 
-  if (error) return { error: error.message }
+  if (error) {
+    if (error.code === "23505") {
+      return { error: "Ya existe una categoría con ese nombre y tipo" }
+    }
+    return { error: error.message }
+  }
   revalidatePath("/categories")
   revalidatePath("/transactions")
   revalidatePath("/dashboard")
@@ -359,7 +547,7 @@ export async function updateCategory(formData: FormData): Promise<ActionResult> 
 
 const budgetSchema = z.object({
   categoryId: z.string().uuid(),
-  amountLimit: z.coerce.number().positive("El límite debe ser mayor a 0"),
+  amountLimit: moneySchema,
   paymentDate: z.string().min(10, "Elegí el día de pago en el calendario"),
 })
 
@@ -406,6 +594,9 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
   }
   const creditCardId = typeof creditResolved === "string" ? creditResolved : null
 
+  const { monthStart } = await getWalletAppMonthRange()
+  const amount = roundMoney(parsed.data.amountLimit)
+
   const { data: existing } = await supabase
     .from("budgets")
     .select("id")
@@ -413,31 +604,52 @@ export async function upsertBudget(formData: FormData): Promise<ActionResult> {
     .eq("category_id", parsed.data.categoryId)
     .maybeSingle()
 
-  if (existing?.id) {
+  let budgetId = existing?.id as string | undefined
+
+  if (budgetId) {
     const { error } = await supabase
       .from("budgets")
       .update({
-        amount_limit: parsed.data.amountLimit,
-        month_start: BUDGET_DB_MONTH_ANCHOR,
+        payment_day: paymentDay,
+        credit_card_id: creditCardId,
+        amount_limit: amount,
+        month_start: "2000-01-01",
+      })
+      .eq("id", budgetId)
+      .eq("user_id", user.id)
+    if (error) return { error: error.message }
+
+    const versions = (await fetchBudgetLimitVersions(supabase, [budgetId])).get(budgetId) ?? []
+    const { upserts } = planLimitEdit(versions, monthStart, amount)
+    const limitResult = await upsertBudgetLimitRows(supabase, budgetId, upserts)
+    if (limitResult.error) return { error: limitResult.error }
+  } else {
+    const { data: inserted, error } = await supabase
+      .from("budgets")
+      .insert({
+        user_id: user.id,
+        category_id: parsed.data.categoryId,
+        amount_limit: amount,
+        month_start: "2000-01-01",
         payment_day: paymentDay,
         credit_card_id: creditCardId,
       })
-      .eq("id", existing.id)
-      .eq("user_id", user.id)
+      .select("id")
+      .single()
     if (error) return { error: error.message }
-  } else {
-    const { error } = await supabase.from("budgets").insert({
-      user_id: user.id,
-      category_id: parsed.data.categoryId,
-      amount_limit: parsed.data.amountLimit,
-      month_start: BUDGET_DB_MONTH_ANCHOR,
-      payment_day: paymentDay,
-      credit_card_id: creditCardId,
+    budgetId = inserted.id as string
+
+    const { error: limitError } = await supabase.from("budget_limits").insert({
+      budget_id: budgetId,
+      month_start: monthStart,
+      amount_limit: amount,
     })
-    if (error) return { error: error.message }
+    if (limitError) return { error: limitError.message }
   }
+
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
@@ -510,12 +722,15 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
   }
   const creditCardId = typeof creditResolved === "string" ? creditResolved : null
 
+  const { monthStart } = await getWalletAppMonthRange()
+  const amount = roundMoney(parsed.data.amountLimit)
+
   const { error } = await supabase
     .from("budgets")
     .update({
       category_id: parsed.data.categoryId,
-      amount_limit: parsed.data.amountLimit,
-      month_start: BUDGET_DB_MONTH_ANCHOR,
+      amount_limit: amount,
+      month_start: "2000-01-01",
       payment_day: paymentDay,
       credit_card_id: creditCardId,
     })
@@ -523,8 +738,19 @@ export async function updateBudget(formData: FormData): Promise<ActionResult> {
     .eq("user_id", user.id)
 
   if (error) return { error: error.message }
+
+  const versions =
+    (await fetchBudgetLimitVersions(supabase, [parsed.data.budgetId])).get(parsed.data.budgetId) ??
+    []
+  const { upserts } = planLimitEdit(versions, monthStart, amount)
+  const limitResult = await upsertBudgetLimitRows(supabase, parsed.data.budgetId, upserts)
+  if (limitResult.error) return { error: limitResult.error }
+
+  await syncBudgetMirrorAmount(supabase, parsed.data.budgetId, user.id, amount)
+
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
@@ -535,6 +761,14 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   } = await supabase.auth.getUser()
   if (!user) return { error: "No autenticado" }
 
+  const { data: existing } = await supabase
+    .from("budgets")
+    .select("id")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle()
+  if (!existing) return { error: "Presupuesto no encontrado" }
+
   const { error } = await supabase
     .from("budgets")
     .delete()
@@ -544,6 +778,7 @@ export async function deleteBudget(id: string): Promise<ActionResult> {
   if (error) return { error: error.message }
   revalidatePath("/dashboard")
   revalidatePath("/budgets")
+  revalidatePath("/credit-cards/vinculos")
   return { success: true }
 }
 
@@ -561,7 +796,6 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     .select(
       `
       id,
-      amount_limit,
       payment_day,
       credit_card_id,
       category:categories ( id, name, color, icon )
@@ -570,6 +804,9 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     .eq("user_id", user.id)
 
   if (!budgets?.length) return []
+
+  const budgetIds = budgets.map((b) => b.id as string)
+  const versionsByBudget = await fetchBudgetLimitVersions(supabase, budgetIds)
 
   const cardIds = [
     ...new Set(
@@ -581,17 +818,17 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
 
   const cardById = new Map<
     string,
-    { pan: string, holder_first_name: string, holder_last_name: string, exp_month: number, exp_year: number }
+    { last4: string, holder_first_name: string, holder_last_name: string, exp_month: number, exp_year: number }
   >()
   if (cardIds.length > 0) {
     const { data: cards } = await supabase
       .from("credit_cards")
-      .select("id, pan, holder_first_name, holder_last_name, exp_month, exp_year")
+      .select("id, last4, holder_first_name, holder_last_name, exp_month, exp_year")
       .eq("user_id", user.id)
       .in("id", cardIds)
     for (const c of cards ?? []) {
       cardById.set(c.id as string, {
-        pan: c.pan as string,
+        last4: c.last4 as string,
         holder_first_name: c.holder_first_name as string,
         holder_last_name: c.holder_last_name as string,
         exp_month: Number(c.exp_month),
@@ -613,14 +850,16 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
   const movementsByCategory = new Map<string, BudgetCategoryMovement[]>()
   for (const t of tx ?? []) {
     const categoryId = t.category_id as string
-    const amount = Number(t.amount)
-    spentByCategory.set(categoryId, (spentByCategory.get(categoryId) ?? 0) + amount)
+    const amount = roundMoney(Number(t.amount))
+    spentByCategory.set(categoryId, roundMoney((spentByCategory.get(categoryId) ?? 0) + amount))
     const list = movementsByCategory.get(categoryId) ?? []
     list.push({
       id: t.id as string,
       amount,
       note: (t.note as string | null) ?? null,
       occurredAt: String(t.occurred_at).slice(0, 10),
+      categoryId,
+      kind: "expense",
     })
     movementsByCategory.set(categoryId, list)
   }
@@ -637,8 +876,12 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
       | null
       | undefined
     if (!cat?.id) return []
+
+    const versions = versionsByBudget.get(b.id as string) ?? []
+    const limit = resolveEffectiveLimit(versions, monthStart)
+    if (limit == null) return []
+
     const spent = spentByCategory.get(cat.id) ?? 0
-    const limit = Number(b.amount_limit)
     const ratio = limit > 0 ? spent / limit : 0
     let level: "ok" | "warn" | "over" = "ok"
     if (ratio >= 1) level = "over"
@@ -648,7 +891,7 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
     const card =
       crow != null
         ? {
-            last4: panLast4(crow.pan),
+            last4: crow.last4,
             holderShort: holderShortFromCard(crow.holder_first_name, crow.holder_last_name),
             exp_label: formatExpMmYy(crow.exp_month, crow.exp_year),
           }
@@ -675,8 +918,8 @@ export async function getBudgetAlertsForUser(): Promise<BudgetAlertRow[]> {
 }
 
 /** Persiste el mes de contexto global (cookie) y refresca vistas que lo usan */
-export async function setWalletAppMonth(monthStartIso: string): Promise<void> {
-  const trimmed = monthStartIso.trim()
+export async function setWalletAppMonth(monthStartIsoInput: string): Promise<void> {
+  const trimmed = monthStartIsoInput.trim()
   const padded = trimmed.length === 7 ? `${trimmed}-01` : trimmed.slice(0, 10)
   const normalized = normalizeMonthStartInput(padded)
   const jar = await cookies()

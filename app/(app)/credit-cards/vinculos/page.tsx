@@ -25,7 +25,7 @@ export default async function CreditCardBudgetLinksPage() {
           </Button>
           <Heading>Presupuestos por tarjeta</Heading>
           <Text className="mt-1">
-            Categorías vinculadas a cada plástico y gasto del mes que elegís en Resumen.
+            Categorías ligadas a cada plástico (etiqueta visual) y gasto del mes en esas categorías.
           </Text>
         </div>
       </header>

@@ -36,7 +36,7 @@ const PaymentModeToggle = ({ canPayFull, value, onChange }: PaymentModeTogglePro
   }
 
   return (
-    <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Tipo de pago">
+    <div className="grid grid-cols-2 gap-2" role="tablist" aria-label="Monto del gasto">
       {value === "custom" ? (
         <Button
           type="button"
@@ -70,7 +70,7 @@ const PaymentModeToggle = ({ canPayFull, value, onChange }: PaymentModeTogglePro
           onClick={handleSelectFull}
           className="w-full"
         >
-          Completo
+          Hasta el límite
         </Button>
       ) : (
         <Button
@@ -82,7 +82,7 @@ const PaymentModeToggle = ({ canPayFull, value, onChange }: PaymentModeTogglePro
           onClick={handleSelectFull}
           className="w-full"
         >
-          Completo
+          Hasta el límite
         </Button>
       )}
     </div>
@@ -205,7 +205,7 @@ const RegisterBudgetPaymentFormInner = ({
           color="emerald"
           disabled={pending || amountValue === ""}
         >
-          {pending ? "Guardando…" : mode === "full" ? "Pagar completo" : "Registrar pago"}
+          {pending ? "Guardando…" : "Registrar gasto"}
         </Button>
       </DialogActions>
     </>
@@ -252,14 +252,14 @@ export const RegisterBudgetPaymentDialog = ({
         plain
         type="button"
         onClick={handleClickOpen}
-        aria-label={`Pagar ${categoryName}`}
+        aria-label={`Registrar gasto en ${categoryName}`}
         aria-haspopup="dialog"
       >
         <BanknotesIcon />
       </Button>
       <Dialog open={open} onClose={handleCloseDialog} size="md">
         <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-          Registrar pago
+          Registrar gasto
         </p>
         <DialogTitle className="mt-1 text-2xl/8 font-semibold sm:text-xl/8">
           {categoryName}

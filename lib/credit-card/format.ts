@@ -5,6 +5,19 @@ export const panLast4 = (pan: string): string => {
   return d.length >= 4 ? d.slice(-4) : d
 }
 
+/** Primeros 6 dígitos (BIN) a partir de un PAN de 16. */
+export const panBin = (pan: string): string => {
+  const d = normalizePanDigits(pan)
+  return d.length >= 6 ? d.slice(0, 6) : d
+}
+
+/** Extrae BIN + last4 de un PAN validado (16 dígitos). */
+export const panToStoredParts = (pan: string): { bin: string, last4: string } | null => {
+  const d = normalizePanDigits(pan)
+  if (d.length !== 16) return null
+  return { bin: d.slice(0, 6), last4: d.slice(-4) }
+}
+
 /** PAN mientras se escribe: hasta 16 dígitos con espacio cada 4 (ej. 4111 1111 1111 1111) */
 export const formatPanTyping = (raw: string): string => {
   const digits = normalizePanDigits(raw).slice(0, 16)

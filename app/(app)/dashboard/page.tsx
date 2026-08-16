@@ -22,7 +22,7 @@ import type { CategoryRow } from "@/lib/types/wallet"
 interface MonthTxRow {
   amount: number | string
   kind: string
-  category: { name: string, color: string } | null
+  category: { id: string, name: string, color: string } | null
 }
 
 interface RecentRow {
@@ -62,7 +62,7 @@ export default async function DashboardPage() {
       `
       amount,
       kind,
-      category:categories ( name, color )
+      category:categories ( id, name, color )
     `
     )
     .eq("user_id", user.id)
@@ -83,11 +83,10 @@ export default async function DashboardPage() {
     }
     monthExpense += amt
     const cat = t.category
-    if (!cat) continue
-    const key = cat.name
-    const prev = expenseByCat.get(key) ?? { name: cat.name, color: cat.color, value: 0 }
+    if (!cat?.id) continue
+    const prev = expenseByCat.get(cat.id) ?? { name: cat.name, color: cat.color, value: 0 }
     prev.value += amt
-    expenseByCat.set(key, prev)
+    expenseByCat.set(cat.id, prev)
   }
 
   const monthBalance = monthIncome - monthExpense
@@ -143,7 +142,7 @@ export default async function DashboardPage() {
       </header>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <TransactionQuickForm categories={categories} />
+        <TransactionQuickForm categories={categories} monthStart={start} monthEnd={end} />
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
           <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2 lg:col-span-1">
@@ -190,6 +189,7 @@ export default async function DashboardPage() {
                   budget={a}
                   monthStart={start}
                   monthEnd={end}
+                  categories={categories}
                   actions={
                     <>
                       <RegisterBudgetPaymentDialog

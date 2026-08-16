@@ -2,6 +2,7 @@
 
 import Link from "next/link"
 import { CategoryIcon } from "@/components/category-icon"
+import { paymentDayLabel } from "@/lib/budgets/limits"
 import { holderDisplayFull } from "@/lib/credit-card/format"
 import { monthLabel } from "@/lib/dates/month"
 import { formatMoney } from "@/lib/format/money"
@@ -52,13 +53,13 @@ export const CreditCardBudgetUsageView = ({ groups }: CreditCardBudgetUsageViewP
             {budgets.length > 0 ? (
               <div className="shrink-0 text-right">
                 <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-                  Gastado este mes
+                  Gasto en categorías ligadas
                 </p>
                 <p className="text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
                   {formatMoney(totalSpentOnCard)}
                 </p>
                 <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                  Mismo mes que en Resumen · suma de movimientos en esas categorías
+                  Suma de gastos del mes en esas categorías (etiqueta de tarjeta, no saldo del plástico)
                 </p>
               </div>
             ) : null}
@@ -95,7 +96,8 @@ export const CreditCardBudgetUsageView = ({ groups }: CreditCardBudgetUsageViewP
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{b.categoryName}</p>
                       <p className="mt-0.5 text-xs text-zinc-500 dark:text-zinc-400">
-                        Gasto en {monthLabel(b.monthStart)} · día de pago {b.paymentDay}
+                        Techo en {monthLabel(b.monthStart)} · día de pago{" "}
+                        {paymentDayLabel(b.monthStart, b.paymentDay)}
                       </p>
                       <p className="mt-1 text-xs tabular-nums text-zinc-700 dark:text-zinc-200">
                         <span className="font-medium text-zinc-900 dark:text-zinc-100">

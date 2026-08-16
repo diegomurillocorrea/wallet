@@ -24,7 +24,8 @@ export default async function CreditCardsPage() {
         <div>
           <Heading>Tarjetas</Heading>
           <Text className="mt-1">
-            Registrá plásticos para asociarlos a presupuestos y ver en qué tarjeta cae cada pago mensual.
+            Registrá plásticos como etiqueta visual: asociálos a presupuestos para ver a qué tarjeta
+            está ligado cada techo de gasto.
           </Text>
         </div>
         <Button href="/credit-cards/vinculos" outline className="self-start sm:self-auto">

@@ -6,15 +6,17 @@ import type { ReactNode } from "react"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
+import { paymentDayLabel } from "@/lib/budgets/limits"
 import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { formatMoney } from "@/lib/format/money"
-import type { BudgetAlertRow } from "@/lib/types/wallet"
+import type { BudgetAlertRow, CategoryRow } from "@/lib/types/wallet"
 
 interface BudgetMonthDisclosureProps {
   budget: BudgetAlertRow
   monthStart: string
   monthEnd: string
   actions: ReactNode
+  categories?: CategoryRow[]
 }
 
 const progressFillClass = (level: BudgetAlertRow["level"], spent: number, limit: number) => {
@@ -35,9 +37,11 @@ export const BudgetMonthDisclosure = ({
   monthStart,
   monthEnd,
   actions,
+  categories = [],
 }: BudgetMonthDisclosureProps) => {
   const status = statusCopy(budget)
   const fillClass = progressFillClass(budget.level, budget.spent, budget.limit)
+  const dayLabel = paymentDayLabel(monthStart, budget.paymentDay)
 
   return (
     <Disclosure as="div" className="py-1">
@@ -60,7 +64,7 @@ export const BudgetMonthDisclosure = ({
               <ChevronDownIcon className="size-4 shrink-0 text-zinc-400 transition duration-200 group-data-open:rotate-180 dark:text-zinc-500" />
             </div>
             <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
-              Pago día <span className="tabular-nums">{budget.paymentDay}</span>
+              Día de pago <span className="tabular-nums">{dayLabel}</span>
               {budget.card ? (
                 <>
                   <span className="text-zinc-300 dark:text-zinc-600"> · </span>
@@ -123,9 +127,14 @@ export const BudgetMonthDisclosure = ({
                     {formatMoney(movement.amount)}
                   </span>
                   <EditTransactionDialog
-                    movement={movement}
+                    movement={{
+                      ...movement,
+                      categoryId: movement.categoryId ?? budget.categoryId,
+                      kind: movement.kind ?? "expense",
+                    }}
                     monthStart={monthStart}
                     monthEnd={monthEnd}
+                    categories={categories}
                   />
                   <DeleteTransactionButton id={movement.id} />
                 </div>
