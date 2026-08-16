@@ -18,7 +18,7 @@ export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) =>
 
   if (!data.length) {
     return (
-      <p className="flex h-56 items-center justify-center text-center text-sm text-zinc-500 dark:text-zinc-400">
+      <p className="flex h-56 items-center justify-center text-center text-sm text-ink/60">
         Registrá gastos este mes para ver el desglose por categoría.
       </p>
     )

@@ -7,14 +7,21 @@
   color-scheme: light dark;
   --butter: #ffefb3;
   --forest: #013e37;
-  --background: #ffefb3;
-  --foreground: #013e37;
+  --sand: #ffefb3;
+  --ink: #000000;
+  --paper: #ffffff;
+  --background: #000000;
+  --foreground: #ffefb3;
+  --wally-mark-fg: #ffefb3;
 }
 
 @theme {
   --color-butter: #ffefb3;
+  --color-sand: #ffefb3;
+  --color-ink: #000000;
+  --color-paper: #ffffff;
   --color-forest: #013e37;
-  --color-white: #fff9e6;
+  --color-white: #ffffff;
   --color-zinc-50: #fff4d0;
   --color-zinc-100: #ffefb3;
   --color-zinc-200: #ead99a;
@@ -54,17 +61,18 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-archivo-black), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html.dark {
-  --background: #013e37;
+html.dark,
+html.light {
+  --background: #000000;
   --foreground: #ffefb3;
 }
 
 html.light {
-  --background: #ffefb3;
-  --foreground: #013e37;
+  --wally-mark-fg: #013e37;
 }
 
 * {
@@ -72,10 +80,18 @@ html.light {
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--ink);
+  color: var(--sand);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+.font-display {
+  font-family: var(--font-display), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
+}
+
+.bento-panel {
+  @apply relative overflow-hidden rounded-[1.75rem] bg-paper p-5 text-ink sm:rounded-[2rem] sm:p-7;
 }
 
 .focus-ring {

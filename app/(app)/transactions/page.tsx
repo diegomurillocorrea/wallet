@@ -1,5 +1,5 @@
-import { Heading, Subheading } from "@/components/ui/heading"
-import { Text } from "@/components/ui/text"
+import { PageHeader } from "@/components/page-header"
+import { BentoTile } from "@/components/bento-tile"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
@@ -102,36 +102,30 @@ export default async function TransactionsPage() {
   groups.sort((a, b) => a.name.localeCompare(b.name))
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Heading>Movimientos</Heading>
-          <Text className="mt-1">
-            Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen).
-          </Text>
-        </div>
-        <WalletAppMonthSelect monthStart={monthStart} />
-      </header>
+    <div className="flex flex-col gap-3">
+      <PageHeader
+        title="Movimientos"
+        aside={<WalletAppMonthSelect monthStart={monthStart} />}
+      >
+        Mostrando {monthLabel(monthStart)} (mismo mes que en Resumen).
+      </PageHeader>
 
       <TransactionQuickForm categories={categories} monthStart={start} monthEnd={end} />
 
-      <section
-        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
-        aria-labelledby="tx-list-heading"
-      >
-        <Subheading id="tx-list-heading" level={2}>
+      <BentoTile tone="paper" as="section" aria-labelledby="tx-list-heading">
+        <h2 id="tx-list-heading" className="font-display text-2xl uppercase tracking-tight text-ink">
           Historial
-        </Subheading>
+        </h2>
         {rows.length === 0 ? (
-          <Text className="mt-4">
+          <p className="mt-4 text-sm text-ink/70">
             No hay movimientos en {monthLabel(monthStart)}.
-          </Text>
+          </p>
         ) : (
           <div className="mt-4 flex flex-col gap-6">
             {isTruncated ? (
-              <Text>
+              <p className="text-sm text-ink/70">
                 Mostrando los {rows.length} más recientes de {totalCount} en este mes.
-              </Text>
+              </p>
             ) : null}
             {groups.map((group) => (
               <div key={group.key}>
@@ -192,7 +186,7 @@ export default async function TransactionsPage() {
             ))}
           </div>
         )}
-      </section>
+      </BentoTile>
     </div>
   )
 }

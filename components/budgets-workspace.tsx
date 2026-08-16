@@ -63,7 +63,7 @@ export const BudgetsWorkspace = ({
   }, [])
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-3 lg:grid-cols-2">
       <div ref={formAnchorRef}>
         <BudgetForm
           key={editTarget?.budgetId ?? "create"}
@@ -75,7 +75,7 @@ export const BudgetsWorkspace = ({
       </div>
 
       <section
-        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
+        className="bento-panel"
         aria-labelledby="budget-list-heading"
       >
           <Subheading id="budget-list-heading" level={2}>

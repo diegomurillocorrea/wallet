@@ -33,7 +33,7 @@ export const CreditCardBudgetUsageView = ({ groups }: CreditCardBudgetUsageViewP
       {groups.map(({ card, budgets, totalSpentOnCard }) => (
         <li
           key={card.id}
-          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
+          className="bento-panel"
         >
           <div className="flex flex-wrap items-start justify-between gap-3 border-b border-zinc-100 pb-3 dark:border-zinc-800">
             <div className="flex min-w-0 items-center gap-3">

@@ -11,8 +11,8 @@ interface IncomeExpenseBarsProps {
 export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) => {
   const { ref, width, height } = useChartContainerSize()
   const data = [
-    { name: "Ingresos", value: income, fill: "var(--foreground)" },
-    { name: "Gastos", value: expense, fill: "var(--color-orange-500)" },
+    { name: "Ingresos", value: income, fill: "#013e37" },
+    { name: "Gastos", value: expense, fill: "#000000" },
   ]
 
   return (
@@ -24,9 +24,9 @@ export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) =
           data={data}
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" className="stroke-zinc-200 dark:stroke-zinc-700" />
-          <XAxis dataKey="name" tick={{ fontSize: 12 }} className="fill-zinc-600 dark:fill-zinc-400" />
-          <YAxis tick={{ fontSize: 11 }} className="fill-zinc-600 dark:fill-zinc-400" />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-ink/15" />
+          <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#000" }} />
+          <YAxis tick={{ fontSize: 11, fill: "#000" }} />
           <Tooltip
             formatter={(v) =>
               new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(

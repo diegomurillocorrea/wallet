@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { Footer } from "@/components/footer"
-import { DaiegoLogo } from "@/components/daiego-logo"
+import { WallyMark } from "@/components/wally-mark"
 import { GoogleAuthButton } from "@/components/google-auth-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
@@ -55,39 +55,33 @@ export default function SignupPage() {
   const displayStatus = isSuccessMessage ? message : null
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-zinc-100 dark:bg-zinc-950">
-      <div
-        className="pointer-events-none absolute inset-0 opacity-90 dark:opacity-70"
-        aria-hidden
-      >
-        <div className="absolute -left-24 top-0 h-72 w-72 rounded-full bg-forest/25 blur-3xl dark:bg-butter/20" />
-        <div className="absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-butter/80 blur-3xl dark:bg-forest/40" />
-        <div className="absolute left-1/2 top-1/3 h-64 w-64 -translate-x-1/2 rounded-full bg-forest/15 blur-3xl dark:bg-butter/10" />
+    <div className="relative flex min-h-screen flex-col bg-ink">
+      <div className="absolute right-4 top-4 z-10 text-sand">
+        <ThemeToggle />
       </div>
-      <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-4 py-8">
-        <div className="absolute right-4 top-4">
-          <ThemeToggle />
-        </div>
-
-        <motion.main
+      <div className="relative z-10 flex flex-1 flex-col justify-center p-3">
+        <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="w-full max-w-md rounded-2xl border border-zinc-200/80 bg-white/90 p-8 shadow-lg backdrop-blur-md dark:border-zinc-800 dark:bg-zinc-900/90 dark:shadow-xl sm:p-10"
+          className="mx-auto grid w-full max-w-5xl gap-3 lg:grid-cols-12 lg:min-h-[34rem]"
         >
-          <div className="mb-8 text-center">
-            <div className="mb-2 flex items-center justify-center gap-3" role="group" aria-label="DAIEGO Wallet">
-              <DaiegoLogo
-                width={56}
-                height={56}
-                priority
-                className="h-12 w-12 shrink-0 object-contain"
-              />
-              <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50 sm:text-3xl">
-                Crear cuenta
-              </h1>
-            </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <div className="relative min-h-[14rem] overflow-hidden rounded-[1.75rem] bg-forest text-sand [--wally-counter:var(--color-forest)] sm:rounded-[2rem] lg:col-span-5">
+            <WallyMark className="absolute top-6 left-6 size-12 text-sand" />
+            <p className="sr-only">Wally</p>
+            <p
+              aria-hidden
+              className="absolute bottom-6 left-6 font-display text-7xl uppercase leading-none tracking-tight [writing-mode:vertical-rl] rotate-180"
+            >
+              Wally
+            </p>
+          </div>
+          <main className="bento-panel lg:col-span-7">
+          <div className="mb-8">
+            <h1 className="font-display text-4xl uppercase tracking-tight text-ink">
+              Crear cuenta
+            </h1>
+            <p className="mt-2 text-sm uppercase tracking-wide text-ink/60">
               Google crea tu cuenta al instante; el correo es opcional.
             </p>
           </div>
@@ -178,11 +172,12 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="mt-6 text-center text-sm text-ink/60">
             ¿Ya tenés cuenta?{" "}
             <TextLink href="/login">Iniciar sesión</TextLink>
           </p>
-        </motion.main>
+          </main>
+        </motion.div>
       </div>
       <Footer />
     </div>

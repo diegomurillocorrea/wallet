@@ -70,7 +70,7 @@ export const BudgetForm = ({
   return (
     <form
       action={formAction}
-      className="flex flex-col gap-4 rounded-2xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
+      className="flex flex-col gap-4 bento-panel"
     >
       {isEdit ? <input type="hidden" name="budgetId" value={editTarget.budgetId} /> : null}
       <Subheading level={2}>

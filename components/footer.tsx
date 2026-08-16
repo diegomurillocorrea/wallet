@@ -1,20 +1,23 @@
 "use client"
 
-import { DaiegoLogo } from "@/components/daiego-logo"
+import { WallyMark } from "@/components/wally-mark"
 
 export function Footer() {
   return (
     <footer
-      className="flex w-full flex-wrap items-center justify-between gap-4 bg-forest px-4 py-4 text-butter dark:bg-butter dark:text-forest sm:px-6 lg:px-8"
+      className="px-3 pb-3"
       role="contentinfo"
       aria-label="Pie de página"
     >
-      <div className="flex flex-wrap items-center gap-3">
-        <DaiegoLogo className="h-10 w-10 shrink-0 object-contain drop-shadow-sm" sizes="40px" />
+      <div className="flex w-full flex-wrap items-center justify-between gap-4 rounded-[1.75rem] bg-sand px-5 py-4 text-ink [--wally-counter:var(--color-sand)] sm:px-7">
+        <div className="flex items-center gap-3">
+          <WallyMark className="size-9 shrink-0" />
+          <span className="font-display text-lg uppercase tracking-tight">Wally</span>
+        </div>
+        <span className="text-sm font-medium uppercase tracking-wide">
+          Wally © 2026
+        </span>
       </div>
-      <span className="text-sm font-medium" aria-label="DAIEGO LLC copyright 2026">
-        DAIEGO LLC © 2026
-      </span>
     </footer>
   )
 }

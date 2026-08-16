@@ -3,7 +3,7 @@ import { LoginPageContent } from "./login-form"
 
 export const metadata: Metadata = {
   title: "Login",
-  description: "Iniciá sesión en DAIEGO Wallet.",
+  description: "Iniciá sesión en Wally.",
 }
 
 export default function LoginPage() {

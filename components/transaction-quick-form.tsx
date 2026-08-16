@@ -7,8 +7,6 @@ import { Button } from "@/components/ui/button"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
 import { Select } from "@/components/ui/select"
-import { Subheading } from "@/components/ui/heading"
-import { Text } from "@/components/ui/text"
 import { clampIsoDateToRange } from "@/lib/dates/month"
 import { todayInElSalvador } from "@/lib/dates/el-salvador"
 import type { CategoryRow, TransactionKind } from "@/lib/types/wallet"
@@ -18,12 +16,15 @@ interface TransactionQuickFormProps {
   /** Rango del mes en contexto: acota la fecha del movimiento */
   monthStart?: string
   monthEnd?: string
+  /** Sin marco propio: el padre ya es una baldosa bento */
+  embedded?: boolean
 }
 
 export const TransactionQuickForm = ({
   categories,
   monthStart,
   monthEnd,
+  embedded = false,
 }: TransactionQuickFormProps) => {
   const [kind, setKind] = useState<TransactionKind>("expense")
   const [state, formAction, pending] = useActionState(
@@ -46,16 +47,23 @@ export const TransactionQuickForm = ({
 
   return (
     <section
-      className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
+      className={
+        embedded
+          ? ""
+          : "bento-panel"
+      }
       aria-labelledby="quick-add-heading"
     >
-      <Subheading id="quick-add-heading" level={2}>
+      <h2
+        id="quick-add-heading"
+        className="font-display text-2xl uppercase tracking-tight text-ink"
+      >
         Registrar movimiento
-      </Subheading>
-      <Text className="mt-1">
+      </h2>
+      <p className="mt-1 text-sm text-ink/70">
         Gasto o ingreso en pocos segundos
         {constrainToMonth ? " · la fecha queda en el mes en contexto" : ""}.
-      </Text>
+      </p>
 
       <div className="mt-4">
         <KindToggle

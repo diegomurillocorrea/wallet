@@ -10,7 +10,7 @@ import {
 } from "@heroicons/react/20/solid"
 import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { DaiegoLogo } from "@/components/daiego-logo"
+import { WallyMark } from "@/components/wally-mark"
 import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Dropdown,
@@ -62,13 +62,9 @@ export const AppShell = ({ children, email }: AppShellProps) => {
   }
 
   const brand = (
-    <NavbarItem href="/dashboard" aria-label="DAIEGO Wallet — ir al resumen">
-      <DaiegoLogo
-        className="size-7 shrink-0 rounded-md object-contain ring-1 ring-zinc-200/80 dark:ring-white/15 sm:size-8"
-        priority
-        sizes="(max-width: 640px) 28px, 32px"
-      />
-      <NavbarLabel>Wallet</NavbarLabel>
+    <NavbarItem href="/dashboard" aria-label="Wally — ir al resumen">
+      <WallyMark className="size-8 shrink-0" />
+      <NavbarLabel className="font-display text-lg uppercase tracking-tight">Wally</NavbarLabel>
     </NavbarItem>
   )
 
@@ -87,7 +83,7 @@ export const AppShell = ({ children, email }: AppShellProps) => {
                 current={isCurrentPath(pathname, href)}
               >
                 <Icon />
-                <NavbarLabel>{label}</NavbarLabel>
+                <NavbarLabel className="uppercase tracking-wider">{label}</NavbarLabel>
               </NavbarItem>
             ))}
           </NavbarSection>
@@ -114,12 +110,9 @@ export const AppShell = ({ children, email }: AppShellProps) => {
         <Sidebar>
           <SidebarHeader>
             <SidebarSection>
-              <SidebarItem href="/dashboard" aria-label="DAIEGO Wallet — ir al resumen">
-                <DaiegoLogo
-                  className="size-7 shrink-0 rounded-md object-contain ring-1 ring-zinc-200/80 dark:ring-white/15"
-                  sizes="28px"
-                />
-                <SidebarLabel>Wallet</SidebarLabel>
+              <SidebarItem href="/dashboard" aria-label="Wally — ir al resumen">
+                <WallyMark className="size-7 shrink-0" />
+                <SidebarLabel className="font-display uppercase tracking-tight">Wally</SidebarLabel>
               </SidebarItem>
             </SidebarSection>
           </SidebarHeader>
@@ -132,7 +125,7 @@ export const AppShell = ({ children, email }: AppShellProps) => {
                   current={isCurrentPath(pathname, href)}
                 >
                   <Icon />
-                  <SidebarLabel>{label}</SidebarLabel>
+                  <SidebarLabel className="uppercase tracking-wider">{label}</SidebarLabel>
                 </SidebarItem>
               ))}
             </SidebarSection>

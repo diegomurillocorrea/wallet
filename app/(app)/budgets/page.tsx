@@ -1,8 +1,7 @@
 import { listCreditCardsForUser } from "@/app/(app)/actions/credit-card-actions"
 import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { BudgetsWorkspace } from "@/components/budgets-workspace"
-import { Heading } from "@/components/ui/heading"
-import { Text } from "@/components/ui/text"
+import { PageHeader } from "@/components/page-header"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { monthLabel } from "@/lib/dates/month"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
@@ -33,16 +32,13 @@ export default async function BudgetsPage() {
   const creditCards = cardsResult.ok ? cardsResult.cards : []
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Heading>Presupuestos</Heading>
-          <Text className="mt-1">
-            Techos de gasto por categoría · avance según {monthLabel(monthStart)}
-          </Text>
-        </div>
-        <WalletAppMonthSelect monthStart={monthStart} />
-      </header>
+    <div className="flex flex-col gap-3">
+      <PageHeader
+        title="Presupuestos"
+        aside={<WalletAppMonthSelect monthStart={monthStart} />}
+      >
+        Techos de gasto por categoría · avance según {monthLabel(monthStart)}
+      </PageHeader>
 
       {!cardsResult.ok ? (
         <p

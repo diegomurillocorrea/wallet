@@ -7,17 +7,16 @@ import { EditBudgetDialog } from "@/components/edit-budget-dialog"
 import { BudgetMonthDisclosure } from "@/components/budget-month-disclosure"
 import { RegisterBudgetPaymentDialog } from "@/components/register-budget-payment-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
-import { MotionStatCard } from "@/components/motion-stat-card"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { monthLabel } from "@/lib/dates/month"
 import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
-import { Heading, Subheading } from "@/components/ui/heading"
-import { Text } from "@/components/ui/text"
 import { formatMoney, remainingToPay, roundMoney } from "@/lib/format/money"
 import { fetchExpenseSumByCategory, fetchMonthIncomeExpenseTotals } from "@/lib/budgets/spent"
 import { createClient } from "@/lib/supabase/server"
+import { BentoTile } from "@/components/bento-tile"
+import { WallyMark } from "@/components/wally-mark"
 import type { CategoryRow } from "@/lib/types/wallet"
 
 interface RecentRow {
@@ -104,61 +103,176 @@ export default async function DashboardPage() {
     return aCard.localeCompare(bCard)
   })
   const expenseCategories = categories.filter((c) => c.kind === "expense")
+  const periodLabel = monthLabel(monthStart)
 
   return (
-    <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <Heading>Resumen</Heading>
-          <Text className="mt-1">
-            {monthLabel(monthStart)} · balance y movimientos del mes en contexto
-          </Text>
-        </div>
-        <WalletAppMonthSelect monthStart={monthStart} />
-      </header>
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-1 gap-3 lg:min-h-[calc(100svh-9.5rem)] lg:grid-cols-12 lg:grid-rows-[minmax(11rem,auto)_minmax(20rem,1fr)]">
+        <BentoTile
+          tone="paper"
+          as="section"
+          className="flex flex-col justify-between gap-6 lg:col-span-4"
+        >
+          <svg
+            viewBox="0 0 48 36"
+            className="size-10 text-ink"
+            aria-hidden="true"
+            focusable="false"
+          >
+            <path
+              d="M8 28c0-8.8 5.2-16 16-16V4C11.2 4 0 14.4 0 28c0 4.4 2.4 8 8 8 4.4 0 8-3.6 8-8s-3.6-8-8-8Zm24 0c0-8.8 5.2-16 16-16V4C35.2 4 24 14.4 24 28c0 4.4 2.4 8 8 8 4.4 0 8-3.6 8-8s-3.6-8-8-8Z"
+              fill="currentColor"
+            />
+          </svg>
+          <div>
+            <h1 className="font-display text-sm uppercase leading-snug tracking-wide text-ink">
+              Resumen · {periodLabel}. Balance y movimientos del mes en contexto.
+            </h1>
+            <div className="mt-4">
+              <WalletAppMonthSelect monthStart={monthStart} />
+            </div>
+          </div>
+        </BentoTile>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <TransactionQuickForm categories={categories} monthStart={start} monthEnd={end} />
-
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:col-span-2 lg:col-span-1">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Balance del mes
-            </p>
-            <p
-              className={`mt-2 text-3xl font-semibold tabular-nums ${monthBalance >= 0 ? "text-emerald-700 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
-            >
-              {formatMoney(monthBalance)}
-            </p>
-          </MotionStatCard>
-          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
-              Ingresos del mes
-            </p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-              {formatMoney(monthIncome)}
-            </p>
-          </MotionStatCard>
-          <MotionStatCard className="rounded-2xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-800 dark:bg-zinc-900">
-            <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <BentoTile
+          tone="forest"
+          as="section"
+          className="flex min-h-[14rem] flex-col justify-between lg:col-span-8"
+        >
+          <WallyMark className="size-11 text-sand" />
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sand/80">
               Gastos del mes
             </p>
-            <p className="mt-2 text-2xl font-semibold tabular-nums text-orange-600 dark:text-orange-400">
+            <p className="mt-2 font-display text-5xl uppercase leading-none tracking-tight text-sand sm:text-6xl lg:text-7xl">
               {formatMoney(monthExpense)}
             </p>
-          </MotionStatCard>
-        </div>
+          </div>
+        </BentoTile>
+
+        <BentoTile
+          tone="sand"
+          as="section"
+          className="relative min-h-[18rem] lg:col-span-4"
+        >
+          <p className="sr-only">Wally · balance del mes {formatMoney(monthBalance)}</p>
+          <p
+            aria-hidden
+            className="absolute bottom-6 left-5 font-display text-6xl uppercase leading-none tracking-tight text-ink sm:text-7xl lg:text-8xl [writing-mode:vertical-rl] rotate-180"
+          >
+            Wally
+          </p>
+          <div className="absolute right-6 bottom-6 text-right">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/60">
+              Balance
+            </p>
+            <p className="mt-1 font-display text-3xl uppercase leading-none tracking-tight tabular-nums sm:text-4xl">
+              {formatMoney(monthBalance)}
+            </p>
+          </div>
+        </BentoTile>
+
+        <BentoTile
+          tone="paper"
+          as="section"
+          aria-labelledby="recent-heading"
+          className="flex min-h-[18rem] flex-col lg:col-span-8"
+        >
+          <h2
+            id="recent-heading"
+            className="font-display text-2xl uppercase tracking-tight text-ink"
+          >
+            Movimientos
+          </h2>
+          {recent.length === 0 ? (
+            <p className="mt-6 text-sm uppercase tracking-wide text-ink/60">
+              No hay movimientos en {periodLabel}. Registrá un gasto o ingreso abajo.
+            </p>
+          ) : (
+            <ul className="mt-4 flex flex-1 flex-col justify-center divide-y divide-ink/10">
+              {recent.map((t) => {
+                const cat = t.category
+                const isIncome = t.kind === "income"
+                return (
+                  <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                    {cat ? (
+                      <span
+                        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sand text-ink"
+                        style={{ color: cat.color }}
+                      >
+                        <CategoryIcon name={cat.icon} className="size-5" />
+                      </span>
+                    ) : (
+                      <span className="size-10 shrink-0 rounded-full bg-sand" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-semibold uppercase tracking-wide text-ink">
+                        {cat?.name ?? "Sin categoría"}
+                      </p>
+                      <p className="text-xs uppercase tracking-wide text-ink/55">
+                        {formatDateEsSV(t.occurred_at)}
+                        {t.note ? ` · ${t.note}` : ""}
+                      </p>
+                    </div>
+                    <span className="shrink-0 font-display text-sm uppercase tabular-nums text-ink">
+                      {isIncome ? "+" : "−"}
+                      {formatMoney(Number(t.amount))}
+                    </span>
+                    <DeleteTransactionButton id={t.id} />
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </BentoTile>
+      </div>
+
+      <div className="grid gap-3 lg:grid-cols-12">
+        <BentoTile tone="sand" className="lg:col-span-5">
+          <TransactionQuickForm
+            embedded
+            categories={categories}
+            monthStart={start}
+            monthEnd={end}
+          />
+        </BentoTile>
+        <BentoTile tone="forest" className="flex min-h-[12rem] flex-col justify-between lg:col-span-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sand/80">
+            Ingresos del mes
+          </p>
+          <p className="font-display text-4xl uppercase leading-none tracking-tight tabular-nums text-sand sm:text-5xl">
+            {formatMoney(monthIncome)}
+          </p>
+        </BentoTile>
+        <BentoTile
+          tone="paper"
+          as="section"
+          aria-labelledby="chart-bars-heading"
+          className="lg:col-span-4"
+        >
+          <h2
+            id="chart-bars-heading"
+            className="font-display text-xl uppercase tracking-tight text-ink"
+          >
+            Ingresos vs gastos
+          </h2>
+          <IncomeExpenseBars income={monthIncome} expense={monthExpense} />
+        </BentoTile>
       </div>
 
       {alerts.length > 0 ? (
-        <section
-          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
+        <BentoTile
+          tone="paper"
+          as="section"
           aria-labelledby="budget-alerts-heading"
         >
-          <Subheading id="budget-alerts-heading" level={2}>
+          <h2
+            id="budget-alerts-heading"
+            className="font-display text-2xl uppercase tracking-tight text-ink"
+          >
             Presupuestos del mes
-          </Subheading>
-          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
+          </h2>
+          <ul className="mt-4 divide-y divide-ink/10">
             {sortedAlerts.map((a) => (
               <li key={a.budgetId} className="py-3 first:pt-0 last:pb-0">
                 <BudgetMonthDisclosure
@@ -193,83 +307,22 @@ export default async function DashboardPage() {
               </li>
             ))}
           </ul>
-        </section>
+        </BentoTile>
       ) : null}
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section
-          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
-          aria-labelledby="chart-bars-heading"
-        >
-          <Subheading id="chart-bars-heading" level={2}>
-            Ingresos vs gastos
-          </Subheading>
-          <IncomeExpenseBars income={monthIncome} expense={monthExpense} />
-        </section>
-        <section
-          className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
-          aria-labelledby="chart-pie-heading"
-        >
-          <Subheading id="chart-pie-heading" level={2}>
-            Gastos por categoría
-          </Subheading>
-          <ExpenseByCategoryChart data={pieData} />
-        </section>
-      </div>
-
-      <section
-        className="rounded-2xl border border-zinc-200 bg-white p-4 shadow-sm dark:border-zinc-800 dark:bg-zinc-900 sm:p-6"
-        aria-labelledby="recent-heading"
+      <BentoTile
+        tone="sand"
+        as="section"
+        aria-labelledby="chart-pie-heading"
       >
-        <Subheading id="recent-heading" level={2}>
-          Movimientos del mes
-        </Subheading>
-        {recent.length === 0 ? (
-          <Text className="mt-4">
-            No hay movimientos en {monthLabel(monthStart)}. Registrá un gasto o ingreso arriba o cambiá el mes.
-          </Text>
-        ) : (
-          <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
-            {recent.map((t) => {
-              const cat = t.category
-              const isIncome = t.kind === "income"
-              return (
-                <li
-                  key={t.id}
-                  className="flex items-center gap-3 py-3 first:pt-0 last:pb-0"
-                >
-                  {cat ? (
-                    <span
-                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
-                      style={{ color: cat.color }}
-                    >
-                      <CategoryIcon name={cat.icon} className="size-5" />
-                    </span>
-                  ) : (
-                    <span className="size-10 shrink-0 rounded-xl bg-zinc-100 dark:bg-zinc-800" />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                      {cat?.name ?? "Sin categoría"}
-                    </p>
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {formatDateEsSV(t.occurred_at)}
-                      {t.note ? ` · ${t.note}` : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
-                  >
-                    {isIncome ? "+" : "-"}
-                    {formatMoney(Number(t.amount))}
-                  </span>
-                  <DeleteTransactionButton id={t.id} />
-                </li>
-              )
-            })}
-          </ul>
-        )}
-      </section>
+        <h2
+          id="chart-pie-heading"
+          className="font-display text-2xl uppercase tracking-tight text-ink"
+        >
+          Gastos por categoría
+        </h2>
+        <ExpenseByCategoryChart data={pieData} />
+      </BentoTile>
     </div>
   )
 }

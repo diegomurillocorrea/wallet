@@ -2,13 +2,12 @@
 
 import { MoonIcon, SunIcon } from "@heroicons/react/16/solid"
 import { useTheme } from "@/hooks/use-theme"
-import { Button } from "@/components/ui/button"
 
 type ThemeToggleProps = {
   className?: string
 }
 
-export const ThemeToggle = ({ className }: ThemeToggleProps) => {
+export const ThemeToggle = ({ className = "" }: ThemeToggleProps) => {
   const { theme, toggleTheme } = useTheme()
   const isDark = theme === "dark"
 
@@ -17,14 +16,17 @@ export const ThemeToggle = ({ className }: ThemeToggleProps) => {
   }
 
   return (
-    <Button
-      plain
+    <button
       type="button"
-      className={className}
+      className={`inline-flex size-10 items-center justify-center rounded-lg text-current hover:bg-current/10 focus-ring ${className}`}
       onClick={handleClick}
       aria-label={isDark ? "Activar modo claro" : "Activar modo oscuro"}
     >
-      {isDark ? <SunIcon /> : <MoonIcon />}
-    </Button>
+      {isDark ? (
+        <SunIcon className="size-5 fill-current" />
+      ) : (
+        <MoonIcon className="size-5 fill-current" />
+      )}
+    </button>
   )
 }
