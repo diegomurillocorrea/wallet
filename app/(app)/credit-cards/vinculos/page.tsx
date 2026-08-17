@@ -3,6 +3,7 @@ import { getCreditCardBudgetUsage } from "@/app/(app)/actions/credit-card-action
 import { CreditCardBudgetUsageView } from "@/components/credit-card-budget-usage-view"
 import { PageHeader } from "@/components/page-header"
 import { Button } from "@/components/ui/button"
+import { Notice } from "@/components/ui/notice"
 import { createClient } from "@/lib/supabase/server"
 
 export default async function CreditCardBudgetLinksPage() {
@@ -29,12 +30,7 @@ export default async function CreditCardBudgetLinksPage() {
       </PageHeader>
 
       {!usageResult.ok ? (
-        <p
-          className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-100"
-          role="alert"
-        >
-          No se pudieron cargar los vínculos: {usageResult.error}
-        </p>
+        <Notice tone="danger">No se pudieron cargar los vínculos: {usageResult.error}</Notice>
       ) : (
         <CreditCardBudgetUsageView groups={usageResult.groups} />
       )}

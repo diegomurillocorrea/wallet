@@ -7,11 +7,11 @@ import { createClient } from "@/lib/supabase/client"
 import { Footer } from "@/components/footer"
 import { WallyMark } from "@/components/wally-mark"
 import { GoogleAuthButton } from "@/components/google-auth-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Checkbox, CheckboxField } from "@/components/ui/checkbox"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { TextLink } from "@/components/ui/text"
 
 function safeDecodeURIComponent(value: string) {
@@ -67,19 +67,16 @@ export function LoginForm() {
   }
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-ink">
-      <div className="absolute right-4 top-4 z-10 text-sand">
-        <ThemeToggle />
-      </div>
+    <div className="relative flex min-h-screen flex-col">
       <div className="relative z-10 flex flex-1 flex-col justify-center p-3">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto grid w-full max-w-5xl gap-3 lg:grid-cols-12 lg:min-h-[34rem]"
+          className="mx-auto grid w-full gap-3 lg:grid-cols-12 lg:min-h-[34rem]"
         >
-          <div className="relative min-h-[14rem] overflow-hidden rounded-[1.75rem] bg-sand text-ink [--wally-counter:var(--color-sand)] sm:rounded-[2rem] lg:col-span-5">
-            <WallyMark className="absolute top-6 left-6 size-12" />
+          <div className="light glass-tile-sand relative min-h-[14rem] overflow-hidden rounded-tile text-ink sm:rounded-tile-lg lg:col-span-5">
+            <WallyMark className="absolute top-6 left-6 size-12" variant="forest" priority />
             <p className="sr-only">Wally</p>
             <p
               aria-hidden
@@ -95,7 +92,7 @@ export function LoginForm() {
                 Wally
               </h1>
             </div>
-            <p className="text-sm uppercase tracking-wide text-ink/60">
+            <p className="text-sm uppercase tracking-wide text-ink/70">
               Entrá con Google o con tu correo y contraseña
             </p>
           </div>
@@ -107,11 +104,11 @@ export function LoginForm() {
               onError={(message) => setError(message)}
             />
             <div className="flex items-center gap-3" role="separator" aria-label="O continuar con correo">
-              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+              <span className="h-px flex-1 bg-ink/12" />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-ink/70">
                 o correo
               </span>
-              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+              <span className="h-px flex-1 bg-ink/12" />
             </div>
           </div>
 
@@ -160,14 +157,7 @@ export function LoginForm() {
 
             {displayError ? <ErrorMessage>{displayError}</ErrorMessage> : null}
 
-            {message ? (
-              <div
-                role="status"
-                className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
-              >
-                {message}
-              </div>
-            ) : null}
+            {message ? <Notice tone="success">{message}</Notice> : null}
 
             <Button
               type="submit"
@@ -180,7 +170,7 @@ export function LoginForm() {
               {isLoading ? "Iniciando sesión…" : "Iniciar sesión"}
             </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-ink/60">
+          <p className="mt-6 text-center text-sm text-ink/70">
             ¿No tenés cuenta?{" "}
             <TextLink href="/signup">Crear cuenta</TextLink>
           </p>
@@ -194,12 +184,12 @@ export function LoginForm() {
 
 export function LoginFallback() {
   return (
-    <div className="flex min-h-screen flex-col bg-ink">
+    <div className="flex min-h-screen flex-col">
       <div className="flex flex-1 flex-col justify-center p-3">
         <main className="bento-panel mx-auto w-full max-w-md">
           <div className="mb-8">
             <h1 className="font-display text-4xl uppercase tracking-tight text-ink">Wally</h1>
-            <p className="mt-2 text-sm uppercase tracking-wide text-ink/60">Cargando…</p>
+            <p className="mt-2 text-sm uppercase tracking-wide text-ink/70">Cargando…</p>
           </div>
         </main>
       </div>

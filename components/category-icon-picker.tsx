@@ -3,7 +3,11 @@
 import { memo, useCallback, useMemo, useState } from "react"
 import { Circle } from "lucide-react"
 import { DynamicIcon, iconNames, type IconName } from "lucide-react/dynamic"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { resolveCategoryIconKey } from "@/lib/lucide-category-icon"
+
+const pickerLabelClass = "block text-xs font-semibold uppercase tracking-wide text-ink/70 dark:text-sand/60"
 
 const POPULAR_SLUGS = [
   "circle",
@@ -64,10 +68,10 @@ const IconPickButton = memo(({ iconKey, isSelected, onSelect }: IconPickButtonPr
       onKeyDown={handleKeyDown}
       aria-label={`Elegir ícono ${iconKey}`}
       aria-pressed={isSelected}
-      className={`flex size-10 items-center justify-center rounded-xl border text-zinc-700 transition-colors focus:outline-none focus:ring-2 focus:ring-forest/50 dark:text-zinc-200 dark:focus:ring-butter/50 ${
+      className={`glass-interactive flex size-10 items-center justify-center rounded-xl border focus:outline-hidden focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-forest dark:focus-visible:outline-butter ${
         isSelected
-          ? "border-forest bg-emerald-50 dark:border-butter dark:bg-emerald-950/50"
-          : "border-zinc-200 bg-white hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          ? "border-forest/70 bg-forest/12 text-forest dark:border-butter/70 dark:bg-butter/15 dark:text-butter"
+          : "border-white/55 bg-white/45 text-ink/75 hover:border-white/75 hover:bg-white/65 dark:border-butter/15 dark:bg-butter/5 dark:text-sand/80 dark:hover:border-butter/30 dark:hover:bg-butter/10"
       }`}
     >
       <DynamicIcon
@@ -130,26 +134,25 @@ export const CategoryIconPicker = ({ defaultIcon = "circle", idPrefix = "cat-ico
 
   return (
     <div className="flex flex-col gap-3">
-      <label htmlFor={searchId} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+      <label htmlFor={searchId} className={pickerLabelClass}>
         Buscar ícono
       </label>
-      <input
+      <Input
         id={searchId}
         type="search"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Ej. dog, coffee, train-front…"
         autoComplete="off"
-        className="w-full rounded-xl border border-zinc-200 bg-white px-4 py-3 text-sm text-zinc-900 placeholder-zinc-500 focus:border-forest focus:outline-none focus:ring-2 focus:ring-forest/20 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder-zinc-400 dark:focus:border-butter dark:focus:ring-butter/20"
         aria-describedby={hintId}
       />
-      <p id={hintId} className="text-xs text-zinc-500 dark:text-zinc-400">
+      <p id={hintId} className="text-xs text-ink/70 dark:text-sand/60">
         Nombres en inglés (como en{" "}
         <a
           href="https://lucide.dev/icons/"
           target="_blank"
           rel="noopener noreferrer"
-          className="font-medium text-emerald-700 underline-offset-2 hover:underline dark:text-emerald-400"
+          className="font-semibold text-emerald-700 underline decoration-emerald-700/40 underline-offset-2 transition-colors hover:decoration-emerald-700 dark:text-butter dark:decoration-butter/40 dark:hover:decoration-butter"
         >
           lucide.dev
         </a>
@@ -157,7 +160,7 @@ export const CategoryIconPicker = ({ defaultIcon = "circle", idPrefix = "cat-ico
       </p>
 
       <div
-        className="grid max-h-56 grid-cols-6 gap-2 overflow-y-auto p-1 sm:grid-cols-8"
+        className="glass-scroll grid max-h-56 grid-cols-6 gap-2 overflow-y-auto p-1 sm:grid-cols-8"
         role="listbox"
         aria-label="Íconos disponibles"
       >
@@ -167,44 +170,47 @@ export const CategoryIconPicker = ({ defaultIcon = "circle", idPrefix = "cat-ico
       </div>
 
       {query.trim().length > 0 && totalMatches > displayKeys.length ? (
-        <p className="text-xs text-zinc-500 dark:text-zinc-400" role="status">
+        <p className="text-xs text-ink/70 dark:text-sand/60" role="status">
           Mostrando {displayKeys.length} de {totalMatches} coincidencias. Seguí escribiendo para acotar.
         </p>
       ) : null}
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
         <div className="min-w-0 flex-1">
-          <label htmlFor={exactId} className="block text-xs font-medium text-zinc-500 dark:text-zinc-400">
+          <label htmlFor={exactId} className={pickerLabelClass}>
             Nombre exacto (opcional)
           </label>
-          <input
+          <Input
             id={exactId}
             type="text"
             value={exactDraft}
             onChange={(e) => setExactDraft(e.target.value)}
             placeholder="Ej. ShoppingCart o train-front"
             autoComplete="off"
-            className="mt-1 w-full rounded-xl border border-zinc-200 bg-white px-4 py-2.5 text-sm dark:border-zinc-700 dark:bg-zinc-950"
+            className="mt-1"
           />
         </div>
-        <button
+        <Button
           type="button"
+          outline
           onClick={handleApplyExact}
           disabled={!resolveCategoryIconKey(exactDraft)}
-          className="h-11 shrink-0 rounded-xl border border-zinc-200 bg-zinc-100 px-4 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-200 focus:outline-none focus:ring-2 focus:ring-forest/50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-600 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 dark:focus:ring-butter/50"
+          className="shrink-0"
         >
           Usar nombre
-        </button>
+        </Button>
       </div>
 
       <input type="hidden" name="icon" value={selected} />
 
-      <div className="flex items-center gap-3 rounded-xl border border-zinc-100 bg-zinc-50/80 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950/50">
-        <span className="text-xs font-medium text-zinc-500 dark:text-zinc-400">Seleccionado:</span>
-        <code className="text-xs text-zinc-800 dark:text-zinc-200">{selected}</code>
+      <div className="glass-inset flex items-center gap-3 rounded-xl px-3 py-2 dark:border-butter/13 dark:bg-butter/7 dark:shadow-[inset_0_1px_0_rgb(255_239_179/0.08)]">
+        <span className="text-xs font-semibold uppercase tracking-wide text-ink/70 dark:text-sand/60">
+          Seleccionado:
+        </span>
+        <code className="font-mono text-xs text-ink dark:text-sand">{selected}</code>
         <DynamicIcon
           name={selected}
-          className="ml-auto size-7 text-zinc-800 dark:text-zinc-200"
+          className="ml-auto size-7 text-ink dark:text-sand"
           fallback={() => <Circle className="ml-auto size-7" aria-hidden />}
         />
       </div>

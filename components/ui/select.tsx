@@ -14,11 +14,11 @@ export const Select = forwardRef(function Select(
         // Basic layout
         'group relative block w-full',
         // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
-        'before:absolute before:inset-px before:rounded-[calc(var(--radius-lg)-1px)] before:bg-white before:shadow-sm',
+        'before:absolute before:inset-px before:rounded-[calc(var(--radius-xl)-1px)] before:bg-(--glass-field) before:shadow-sm',
         // Background color is moved to control and shadow is removed in dark mode so hide `before` pseudo
         'dark:before:hidden',
         // Focus ring
-        'after:pointer-events-none after:absolute after:inset-0 after:rounded-lg after:ring-transparent after:ring-inset has-data-focus:after:ring-2 has-data-focus:after:ring-forest dark:has-data-focus:after:ring-butter',
+        'after:pointer-events-none after:absolute after:inset-0 after:rounded-xl after:ring-transparent after:ring-inset after:transition-shadow has-data-focus:after:ring-2 has-data-focus:after:ring-forest dark:has-data-focus:after:ring-butter',
         // Disabled state
         'has-data-disabled:opacity-50 has-data-disabled:before:bg-zinc-950/5 has-data-disabled:before:shadow-none',
       ])}
@@ -29,7 +29,9 @@ export const Select = forwardRef(function Select(
         {...props}
         className={clsx([
           // Basic layout
-          'relative block w-full appearance-none rounded-lg py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
+          'relative block w-full appearance-none rounded-xl py-[calc(--spacing(2.5)-1px)] sm:py-[calc(--spacing(1.5)-1px)]',
+          // Motion
+          'transition-[background-color,border-color] duration-150 ease-glass',
           // Horizontal padding
           multiple
             ? 'px-[calc(--spacing(3.5)-1px)] sm:px-[calc(--spacing(3)-1px)]'
@@ -39,9 +41,9 @@ export const Select = forwardRef(function Select(
           // Typography
           'text-base/6 text-zinc-950 placeholder:text-zinc-500 sm:text-sm/6 dark:text-white dark:*:text-white',
           // Border
-          'border border-zinc-950/10 data-hover:border-zinc-950/20 dark:border-white/10 dark:data-hover:border-white/20',
-          // Background color
-          'bg-transparent dark:bg-white/5 dark:*:bg-zinc-800',
+          'border border-zinc-950/12 data-hover:border-zinc-950/22 dark:border-butter/18 dark:data-hover:border-butter/30',
+          // Background: opaque in light context (via `before`), recessed in dark context
+          'bg-transparent dark:bg-ink/20 dark:*:bg-zinc-800',
           // Hide default focus styles
           'focus:outline-hidden',
           // Invalid state
@@ -53,7 +55,7 @@ export const Select = forwardRef(function Select(
       {!multiple && (
         <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
           <svg
-            className="size-5 stroke-zinc-500 group-has-data-disabled:stroke-zinc-600 sm:size-4 dark:stroke-zinc-400 forced-colors:stroke-[CanvasText]"
+            className="size-5 stroke-zinc-500 group-has-data-disabled:stroke-zinc-600 sm:size-4 dark:stroke-sand/65 forced-colors:stroke-[CanvasText]"
             viewBox="0 0 16 16"
             aria-hidden="true"
             fill="none"

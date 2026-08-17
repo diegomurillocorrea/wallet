@@ -47,16 +47,18 @@ const base = [
   // Basic layout
   'relative isolate flex size-4.5 items-center justify-center rounded-[0.3125rem] sm:size-4',
   // Background color + shadow applied to inset pseudo element, so shadow blends with border in light mode
-  'before:absolute before:inset-0 before:-z-10 before:rounded-[calc(0.3125rem-1px)] before:bg-white before:shadow-sm',
+  'before:absolute before:inset-0 before:-z-10 before:rounded-[calc(0.3125rem-1px)] before:bg-(--glass-field) before:shadow-sm',
   // Background color when checked or indeterminate
   'group-data-checked:before:bg-(--checkbox-checked-bg) group-data-indeterminate:before:bg-(--checkbox-checked-bg)',
   // Background color is moved to control and shadow is removed in dark mode so hide `before` pseudo
   'dark:before:hidden',
   // Background color applied to control in dark mode
-  'dark:bg-white/5 dark:group-data-checked:bg-(--checkbox-checked-bg) dark:group-data-indeterminate:bg-(--checkbox-checked-bg)',
+  'dark:bg-ink/22 dark:group-data-checked:bg-(--checkbox-checked-bg) dark:group-data-indeterminate:bg-(--checkbox-checked-bg)',
   // Border
   'border border-zinc-950/15 group-data-checked:border-transparent group-data-indeterminate:border-transparent group-data-hover:group-data-checked:border-transparent group-data-hover:group-data-indeterminate:border-transparent group-data-hover:border-zinc-950/30 group-data-checked:bg-(--checkbox-checked-border) group-data-indeterminate:bg-(--checkbox-checked-border)',
-  'dark:border-white/15 dark:group-data-checked:border-white/5 dark:group-data-indeterminate:border-white/5 dark:group-data-hover:group-data-checked:border-white/5 dark:group-data-hover:group-data-indeterminate:border-white/5 dark:group-data-hover:border-white/30',
+  'dark:border-butter/22 dark:group-data-checked:border-butter/10 dark:group-data-indeterminate:border-butter/10 dark:group-data-hover:group-data-checked:border-butter/10 dark:group-data-hover:group-data-indeterminate:border-butter/10 dark:group-data-hover:border-butter/40',
+  // Motion
+  'transition-[background-color,border-color] duration-150 ease-glass',
   // Inner highlight shadow
   'after:absolute after:inset-0 after:rounded-[calc(0.3125rem-1px)] after:shadow-[inset_0_1px_--theme(--color-white/15%)]',
   'dark:after:-inset-px dark:after:hidden dark:after:rounded-[0.3125rem] dark:group-data-checked:after:block dark:group-data-indeterminate:after:block',

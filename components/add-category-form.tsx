@@ -7,11 +7,10 @@ import { KindToggle } from "@/components/kind-toggle"
 import { Button } from "@/components/ui/button"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { Subheading } from "@/components/ui/heading"
+import { colorInputClass } from "@/components/ui/color-input"
 import type { TransactionKind } from "@/lib/types/wallet"
-
-const colorInputClass =
-  "mt-3 h-11 w-full cursor-pointer rounded-lg border border-zinc-950/10 bg-transparent dark:border-white/10 dark:bg-white/5"
 
 export const AddCategoryForm = () => {
   const [kind, setKind] = useState<TransactionKind>("expense")
@@ -48,7 +47,7 @@ export const AddCategoryForm = () => {
         />
       </Field>
       <div>
-        <span className="text-base/6 font-medium text-zinc-950 sm:text-sm/6 dark:text-white">
+        <span className="text-base/6 font-medium text-zinc-950 sm:text-sm/6 dark:text-sand">
           Ícono
         </span>
         <div className="mt-3">
@@ -56,11 +55,7 @@ export const AddCategoryForm = () => {
         </div>
       </div>
       {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
-      {state?.success ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          Categoría creada.
-        </p>
-      ) : null}
+      {state?.success ? <Notice tone="success">Categoría creada.</Notice> : null}
       <Button type="submit" color="emerald" disabled={pending} className="w-full">
         {pending ? "Guardando…" : "Agregar categoría"}
       </Button>

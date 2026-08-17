@@ -58,7 +58,7 @@ export function Label({ className, ...props }: { className?: string } & Omit<Hea
       {...props}
       className={clsx(
         className,
-        'text-base/6 text-zinc-950 select-none data-disabled:opacity-50 sm:text-sm/6 dark:text-white'
+        'text-base/6 text-zinc-950 select-none data-disabled:opacity-50 sm:text-sm/6 dark:text-sand'
       )}
     />
   )
@@ -72,7 +72,7 @@ export function Description({
     <Headless.Description
       data-slot="description"
       {...props}
-      className={clsx(className, 'text-base/6 text-zinc-500 data-disabled:opacity-50 sm:text-sm/6 dark:text-zinc-400')}
+      className={clsx(className, 'text-base/6 text-zinc-700 data-disabled:opacity-50 sm:text-sm/6 dark:text-sand/70')}
     />
   )
 }
@@ -84,8 +84,14 @@ export function ErrorMessage({
   return (
     <Headless.Description
       data-slot="error"
+      role="alert"
       {...props}
-      className={clsx(className, 'text-base/6 text-red-600 data-disabled:opacity-50 sm:text-sm/6 dark:text-red-500')}
+      className={clsx(
+        className,
+        // Bloque semántico translúcido: el error se lee sin depender solo del color del texto
+        'flex items-start gap-2 rounded-xl border border-red-600/25 bg-red-600/10 px-3 py-2 text-base/6 font-medium text-red-700 data-disabled:opacity-50 sm:text-sm/6',
+        'dark:border-red-400/30 dark:bg-red-500/12 dark:text-red-200'
+      )}
     />
   )
 }

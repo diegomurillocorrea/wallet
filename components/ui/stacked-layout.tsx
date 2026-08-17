@@ -26,13 +26,13 @@ function MobileSidebar({ open, close, children }: React.PropsWithChildren<{ open
     <Headless.Dialog open={open} onClose={close} className="lg:hidden">
       <Headless.DialogBackdrop
         transition
-        className="fixed inset-0 bg-black/70 transition data-closed:opacity-0 data-enter:duration-300 data-enter:ease-out data-leave:duration-200 data-leave:ease-in"
+        className="glass-overlay fixed inset-0 transition data-closed:opacity-0 data-enter:duration-250 data-enter:ease-glass data-leave:duration-150 data-leave:ease-in"
       />
       <Headless.DialogPanel
         transition
-        className="fixed inset-y-0 w-full max-w-80 p-3 transition duration-300 ease-in-out data-closed:-translate-x-full"
+        className="fixed inset-y-0 w-full max-w-80 p-3 transition duration-250 ease-glass data-closed:-translate-x-full data-closed:opacity-0"
       >
-        <div className="flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-sand text-ink [--wally-counter:var(--color-sand)]">
+        <div className="glass-floating flex h-full flex-col overflow-hidden rounded-tile text-sand">
           <div className="-mb-3 px-4 pt-3">
             <Headless.CloseButton as={NavbarItem} aria-label="Cerrar navegación">
               <CloseMenuIcon />
@@ -61,13 +61,14 @@ export function StackedLayout({
   }
 
   return (
-    <div className="relative isolate flex min-h-svh w-full flex-col bg-ink">
+    <div className="relative isolate flex min-h-svh w-full flex-col pt-3">
       <MobileSidebar open={showSidebar} close={handleCloseNav}>
         {sidebar}
       </MobileSidebar>
 
-      <header className="px-3 pt-3">
-        <div className="flex items-center rounded-[1.75rem] bg-forest px-2 text-sand [--wally-counter:var(--color-forest)] sm:px-3">
+      {/* Isla flotante: el contenido pasa por debajo y se ve difuminado a través del vidrio */}
+      <header className="sticky top-3 z-30 px-3">
+        <div className="glass-bar flex items-center rounded-tile px-2 text-sand sm:px-3">
           <div className="py-2 lg:hidden">
             <NavbarItem onClick={handleOpenNav} aria-label="Abrir navegación">
               <OpenMenuIcon />
@@ -78,7 +79,7 @@ export function StackedLayout({
       </header>
 
       <main className="flex flex-1 flex-col px-3 py-3">
-        <div className="mx-auto flex w-full max-w-7xl flex-1 flex-col">{children}</div>
+        <div className="flex w-full flex-1 flex-col">{children}</div>
       </main>
       <Footer />
     </div>

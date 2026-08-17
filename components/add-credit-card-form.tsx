@@ -9,6 +9,7 @@ import { Pan16Input } from "@/components/pan-16-input"
 import { Button } from "@/components/ui/button"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { Subheading } from "@/components/ui/heading"
 
 export const AddCreditCardForm = () => {
@@ -85,11 +86,7 @@ export const AddCreditCardForm = () => {
         />
       </Field>
       {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
-      {showSuccessBanner ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          Tarjeta guardada.
-        </p>
-      ) : null}
+      {showSuccessBanner ? <Notice tone="success">Tarjeta guardada.</Notice> : null}
       <Button type="submit" color="emerald" disabled={pending} className="w-full">
         {pending ? "Guardando…" : "Guardar tarjeta"}
       </Button>

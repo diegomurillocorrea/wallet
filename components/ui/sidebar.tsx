@@ -2,7 +2,7 @@
 
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { LayoutGroup, motion } from 'motion/react'
+import { LayoutGroup, motion } from 'framer-motion'
 import React, { forwardRef, useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
@@ -17,7 +17,7 @@ export function SidebarHeader({ className, ...props }: React.ComponentPropsWitho
       {...props}
       className={clsx(
         className,
-        'flex flex-col border-b border-zinc-950/5 p-4 dark:border-white/5 [&>[data-slot=section]+[data-slot=section]]:mt-2.5'
+        'flex flex-col border-b border-sand/12 p-4 [&>[data-slot=section]+[data-slot=section]]:mt-2.5'
       )}
     />
   )
@@ -29,7 +29,7 @@ export function SidebarBody({ className, ...props }: React.ComponentPropsWithout
       {...props}
       className={clsx(
         className,
-        'flex flex-1 flex-col overflow-y-auto p-4 [&>[data-slot=section]+[data-slot=section]]:mt-8'
+        'glass-scroll flex flex-1 flex-col overflow-y-auto p-4 [&>[data-slot=section]+[data-slot=section]]:mt-8'
       )}
     />
   )
@@ -41,7 +41,7 @@ export function SidebarFooter({ className, ...props }: React.ComponentPropsWitho
       {...props}
       className={clsx(
         className,
-        'flex flex-col border-t border-zinc-950/5 p-4 dark:border-white/5 [&>[data-slot=section]+[data-slot=section]]:mt-2.5'
+        'flex flex-col border-t border-sand/12 p-4 [&>[data-slot=section]+[data-slot=section]]:mt-2.5'
       )}
     />
   )
@@ -58,7 +58,7 @@ export function SidebarSection({ className, ...props }: React.ComponentPropsWith
 }
 
 export function SidebarDivider({ className, ...props }: React.ComponentPropsWithoutRef<'hr'>) {
-  return <hr {...props} className={clsx(className, 'my-4 border-t border-zinc-950/5 lg:-mx-4 dark:border-white/5')} />
+  return <hr {...props} className={clsx(className, 'my-4 border-t border-sand/12 lg:-mx-4')} />
 }
 
 export function SidebarSpacer({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
@@ -67,7 +67,10 @@ export function SidebarSpacer({ className, ...props }: React.ComponentPropsWitho
 
 export function SidebarHeading({ className, ...props }: React.ComponentPropsWithoutRef<'h3'>) {
   return (
-    <h3 {...props} className={clsx(className, 'mb-1 px-2 text-xs/6 font-medium text-zinc-500 dark:text-zinc-400')} />
+    <h3
+      {...props}
+      className={clsx(className, 'mb-1 px-3 text-xs/6 font-medium uppercase tracking-[0.16em] text-sand/55')}
+    />
   )
 }
 
@@ -85,24 +88,25 @@ export const SidebarItem = forwardRef(function SidebarItem(
 ) {
   const classes = clsx(
     // Base
-    'flex w-full items-center gap-3 rounded-lg px-2 py-2.5 text-left text-base/6 font-medium text-zinc-950 sm:py-2 sm:text-sm/5',
+    'relative flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-left text-base/6 font-medium text-sand/85 sm:py-2 sm:text-sm/5',
+    'transition-colors duration-200 ease-glass',
     // Leading icon/icon-only
-    '*:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-zinc-500 sm:*:data-[slot=icon]:size-5',
+    '*:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-sand/70 sm:*:data-[slot=icon]:size-5',
+    '*:data-[slot=icon]:transition-[fill] *:data-[slot=icon]:duration-200',
     // Trailing icon (down chevron or similar)
     '*:last:data-[slot=icon]:ml-auto *:last:data-[slot=icon]:size-5 sm:*:last:data-[slot=icon]:size-4',
     // Avatar
     '*:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 sm:*:data-[slot=avatar]:size-6',
     // Hover
-    'data-hover:bg-zinc-950/5 data-hover:*:data-[slot=icon]:fill-zinc-950',
+    'data-hover:bg-sand/8 data-hover:text-sand data-hover:*:data-[slot=icon]:fill-sand',
     // Active
-    'data-active:bg-zinc-950/5 data-active:*:data-[slot=icon]:fill-zinc-950',
+    'data-active:bg-sand/12 data-active:*:data-[slot=icon]:fill-sand',
     // Current
-    'data-current:*:data-[slot=icon]:fill-zinc-950',
-    // Dark mode
-    'dark:text-white dark:*:data-[slot=icon]:fill-zinc-400',
-    'dark:data-hover:bg-white/5 dark:data-hover:*:data-[slot=icon]:fill-white',
-    'dark:data-active:bg-white/5 dark:data-active:*:data-[slot=icon]:fill-white',
-    'dark:data-current:*:data-[slot=icon]:fill-white'
+    'data-current:text-sand data-current:*:data-[slot=icon]:fill-sand',
+    // Focus
+    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-butter',
+    // Disabled
+    'data-disabled:pointer-events-none data-disabled:opacity-45'
   )
 
   return (
@@ -110,7 +114,8 @@ export const SidebarItem = forwardRef(function SidebarItem(
       {current && (
         <motion.span
           layoutId="current-indicator"
-          className="absolute inset-y-2 -left-4 w-0.5 rounded-full bg-forest dark:bg-butter"
+          transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.7 }}
+          className="glass-inset-dark absolute inset-0 rounded-2xl"
         />
       )}
       {typeof props.href === 'string' ? (

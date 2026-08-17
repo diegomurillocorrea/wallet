@@ -14,14 +14,12 @@ import {
 } from "@/components/ui/dialog"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { colorInputClass } from "@/components/ui/color-input"
 import type { CategoryRow, TransactionKind } from "@/lib/types/wallet"
 
 interface EditCategoryDialogProps {
   category: CategoryRow
 }
-
-const colorInputClass =
-  "mt-3 h-11 w-full cursor-pointer rounded-lg border border-zinc-950/10 bg-transparent dark:border-white/10 dark:bg-white/5"
 
 interface EditCategoryFormFieldsProps {
   category: CategoryRow
@@ -72,7 +70,7 @@ const EditCategoryFormFields = ({ category, formKey, onClose }: EditCategoryForm
             />
           </Field>
           <div>
-            <span className="text-base/6 font-medium text-zinc-950 sm:text-sm/6 dark:text-white">
+            <span className="text-base/6 font-medium text-zinc-950 sm:text-sm/6 dark:text-sand">
               Ícono
             </span>
             <div className="mt-3">

@@ -74,11 +74,8 @@ export const BudgetsWorkspace = ({
         />
       </div>
 
-      <section
-        className="bento-panel"
-        aria-labelledby="budget-list-heading"
-      >
-          <Subheading id="budget-list-heading" level={2}>
+      <section className="bento-panel" aria-labelledby="budget-list-heading">
+        <Subheading id="budget-list-heading" level={2}>
           Avance vs el mes en contexto
         </Subheading>
         {budgets.length === 0 ? (
@@ -88,62 +85,64 @@ export const BudgetsWorkspace = ({
         ) : (
           <>
             <div
-              className="mt-4 rounded-xl border border-zinc-200 bg-zinc-50 p-4 dark:border-zinc-700 dark:bg-zinc-800/50"
+              className="mt-4 rounded-2xl border border-ink/12 bg-sand/45 p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.35)]"
               aria-label="Resumen de presupuestos del mes"
             >
-              <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-ink/70">
                 Total presupuestado
               </p>
-              <p className="mt-1 text-lg font-semibold tabular-nums text-zinc-900 dark:text-zinc-100">
+              <p className="mt-1 font-display text-2xl uppercase leading-none tracking-tight tabular-nums text-ink">
                 {formatMoney(totalBudgeted)}
               </p>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+              <p className="mt-2 text-xs text-ink/70">
                 Suma de los límites en {budgets.length}{" "}
                 {budgets.length === 1 ? "categoría" : "categorías"}
               </p>
             </div>
-            <ul className="mt-4 divide-y divide-zinc-100 dark:divide-zinc-800">
-            {sortedBudgets.map((b) => {
-              const isRowEditing = editTarget?.budgetId === b.budgetId
-              return (
-                <li
-                  key={b.budgetId}
-                  className={`py-3 first:pt-0 last:pb-0 ${
-                    isRowEditing ? "rounded-xl bg-forest/10 ring-1 ring-forest/30 dark:bg-butter/10 dark:ring-butter/30" : ""
-                  }`}
-                >
-                  <BudgetMonthDisclosure
-                    budget={b}
-                    monthStart={defaultPaymentMonthStart}
-                    monthEnd={defaultPaymentMonthEnd}
-                    categories={allCategories}
-                    actions={
-                      <>
-                        <RegisterBudgetPaymentDialog
-                          categoryId={b.categoryId}
-                          categoryName={b.categoryName}
-                          defaultAmount={remainingToPay(b.limit, b.spent)}
-                          monthStart={defaultPaymentMonthStart}
-                          monthEnd={defaultPaymentMonthEnd}
-                        />
-                        <Button
-                          plain
-                          type="button"
-                          onClick={() => handleStartEdit(b)}
-                          disabled={expenseCategories.length === 0}
-                          aria-label={`Editar presupuesto de ${b.categoryName} en el formulario`}
-                          aria-pressed={isRowEditing}
-                        >
-                          <PencilIcon />
-                        </Button>
-                        <DeleteBudgetButton id={b.budgetId} />
-                      </>
-                    }
-                  />
-                </li>
-              )
-            })}
-          </ul>
+            <ul className="mt-4 divide-y divide-ink/12">
+              {sortedBudgets.map((b) => {
+                const isRowEditing = editTarget?.budgetId === b.budgetId
+                return (
+                  <li
+                    key={b.budgetId}
+                    className={`glass-interactive py-3 first:pt-0 last:pb-0 ${
+                      isRowEditing
+                        ? "-mx-2 rounded-2xl bg-forest/8 px-2 ring-1 ring-forest/25"
+                        : ""
+                    }`}
+                  >
+                    <BudgetMonthDisclosure
+                      budget={b}
+                      monthStart={defaultPaymentMonthStart}
+                      monthEnd={defaultPaymentMonthEnd}
+                      categories={allCategories}
+                      actions={
+                        <>
+                          <RegisterBudgetPaymentDialog
+                            categoryId={b.categoryId}
+                            categoryName={b.categoryName}
+                            defaultAmount={remainingToPay(b.limit, b.spent)}
+                            monthStart={defaultPaymentMonthStart}
+                            monthEnd={defaultPaymentMonthEnd}
+                          />
+                          <Button
+                            plain
+                            type="button"
+                            onClick={() => handleStartEdit(b)}
+                            disabled={expenseCategories.length === 0}
+                            aria-label={`Editar presupuesto de ${b.categoryName} en el formulario`}
+                            aria-pressed={isRowEditing}
+                          >
+                            <PencilIcon />
+                          </Button>
+                          <DeleteBudgetButton id={b.budgetId} />
+                        </>
+                      }
+                    />
+                  </li>
+                )
+              })}
+            </ul>
           </>
         )}
       </section>

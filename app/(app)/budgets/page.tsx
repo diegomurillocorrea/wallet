@@ -2,6 +2,7 @@ import { listCreditCardsForUser } from "@/app/(app)/actions/credit-card-actions"
 import { getBudgetAlertsForUser } from "@/app/(app)/actions/wallet-actions"
 import { BudgetsWorkspace } from "@/components/budgets-workspace"
 import { PageHeader } from "@/components/page-header"
+import { Notice } from "@/components/ui/notice"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { monthLabel } from "@/lib/dates/month"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
@@ -41,12 +42,7 @@ export default async function BudgetsPage() {
       </PageHeader>
 
       {!cardsResult.ok ? (
-        <p
-          className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-100"
-          role="alert"
-        >
-          No se pudieron cargar las tarjetas: {cardsResult.error}
-        </p>
+        <Notice tone="warning">No se pudieron cargar las tarjetas: {cardsResult.error}</Notice>
       ) : null}
 
       <BudgetsWorkspace

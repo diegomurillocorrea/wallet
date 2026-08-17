@@ -1,6 +1,13 @@
 "use client"
 
 import { Bar, BarChart, CartesianGrid, Tooltip, XAxis, YAxis } from "recharts"
+import {
+  chartTooltipCursor,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+  formatChartCurrency,
+} from "@/components/charts/chart-theme"
 import { useChartContainerSize } from "@/hooks/use-chart-container-size"
 
 interface IncomeExpenseBarsProps {
@@ -24,21 +31,24 @@ export const IncomeExpenseBars = ({ income, expense }: IncomeExpenseBarsProps) =
           data={data}
           margin={{ top: 8, right: 8, left: 0, bottom: 0 }}
         >
-          <CartesianGrid strokeDasharray="3 3" className="stroke-ink/15" />
-          <XAxis dataKey="name" tick={{ fontSize: 12, fill: "#000" }} />
-          <YAxis tick={{ fontSize: 11, fill: "#000" }} />
+          <CartesianGrid strokeDasharray="3 3" className="stroke-ink/10" vertical={false} />
+          <XAxis
+            dataKey="name"
+            tick={{ fontSize: 12, fill: "rgb(0 0 0 / 0.7)" }}
+            tickLine={false}
+            axisLine={{ stroke: "rgb(0 0 0 / 0.12)" }}
+          />
+          <YAxis
+            tick={{ fontSize: 11, fill: "rgb(0 0 0 / 0.55)" }}
+            tickLine={false}
+            axisLine={false}
+          />
           <Tooltip
-            formatter={(v) =>
-              new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(
-                Number(v ?? 0)
-              )
-            }
-            contentStyle={{
-              borderRadius: "12px",
-              border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
-              background: "var(--color-white)",
-              color: "var(--foreground)",
-            }}
+            formatter={formatChartCurrency}
+            cursor={chartTooltipCursor}
+            contentStyle={chartTooltipStyle}
+            labelStyle={chartTooltipLabelStyle}
+            itemStyle={chartTooltipItemStyle}
           />
           <Bar dataKey="value" radius={[8, 8, 0, 0]} name="Monto" />
         </BarChart>

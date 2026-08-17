@@ -1,6 +1,12 @@
 "use client"
 
 import { Cell, Pie, PieChart, Tooltip } from "recharts"
+import {
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+  formatChartCurrency,
+} from "@/components/charts/chart-theme"
 import { useChartContainerSize } from "@/hooks/use-chart-container-size"
 
 interface Slice {
@@ -18,7 +24,7 @@ export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) =>
 
   if (!data.length) {
     return (
-      <p className="flex h-56 items-center justify-center text-center text-sm text-ink/60">
+      <p className="flex h-56 items-center justify-center text-center text-sm text-ink/70">
         Registrá gastos este mes para ver el desglose por categoría.
       </p>
     )
@@ -39,21 +45,19 @@ export const ExpenseByCategoryChart = ({ data }: ExpenseByCategoryChartProps) =>
             paddingAngle={2}
           >
             {data.map((entry) => (
-              <Cell key={entry.name} fill={entry.color} stroke="transparent" />
+              <Cell
+                key={entry.name}
+                fill={entry.color}
+                stroke="rgb(255 255 255 / 0.55)"
+                strokeWidth={1}
+              />
             ))}
           </Pie>
           <Tooltip
-            formatter={(v) =>
-              new Intl.NumberFormat("es-SV", { style: "currency", currency: "USD" }).format(
-                Number(v ?? 0)
-              )
-            }
-            contentStyle={{
-              borderRadius: "12px",
-              border: "1px solid color-mix(in srgb, var(--foreground) 12%, transparent)",
-              background: "var(--color-white)",
-              color: "var(--foreground)",
-            }}
+            formatter={formatChartCurrency}
+            contentStyle={chartTooltipStyle}
+            labelStyle={chartTooltipLabelStyle}
+            itemStyle={chartTooltipItemStyle}
           />
         </PieChart>
       ) : null}

@@ -5,7 +5,9 @@ import { addTransaction, type ActionResult } from "@/app/(app)/actions/wallet-ac
 import { KindToggle } from "@/components/kind-toggle"
 import { Button } from "@/components/ui/button"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
+import { Subheading } from "@/components/ui/heading"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { Select } from "@/components/ui/select"
 import { clampIsoDateToRange } from "@/lib/dates/month"
 import { todayInElSalvador } from "@/lib/dates/el-salvador"
@@ -54,12 +56,9 @@ export const TransactionQuickForm = ({
       }
       aria-labelledby="quick-add-heading"
     >
-      <h2
-        id="quick-add-heading"
-        className="font-display text-2xl uppercase tracking-tight text-ink"
-      >
+      <Subheading id="quick-add-heading" level={2}>
         Registrar movimiento
-      </h2>
+      </Subheading>
       <p className="mt-1 text-sm text-ink/70">
         Gasto o ingreso en pocos segundos
         {constrainToMonth ? " · la fecha queda en el mes en contexto" : ""}.
@@ -128,11 +127,7 @@ export const TransactionQuickForm = ({
         </Field>
 
         {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
-        {state?.success ? (
-          <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-            Movimiento guardado.
-          </p>
-        ) : null}
+        {state?.success ? <Notice tone="success">Movimiento guardado.</Notice> : null}
 
         <Button type="submit" color="emerald" disabled={pending || filtered.length === 0} className="w-full">
           {pending ? "Guardando…" : "Guardar"}

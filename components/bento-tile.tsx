@@ -1,17 +1,31 @@
 import clsx from "clsx"
 import type { ElementType, ReactNode } from "react"
 
+/*
+ * `light` marca el subárbol como contexto claro: la variante `dark` definida en
+ * globals.css se desactiva dentro de él, así los componentes Catalyst heredan
+ * sus estilos claros sobre el vidrio de papel.
+ */
 const tones = {
-  sand: "bg-sand text-ink [--wally-counter:var(--color-sand)]",
-  forest: "bg-forest text-sand [--wally-counter:var(--color-forest)]",
-  paper: "bg-paper text-ink [--wally-counter:var(--color-sand)]",
-  ink: "bg-ink text-sand [--wally-counter:var(--color-ink)]",
+  sand: "light glass-tile-sand text-ink",
+  forest: "glass-tile-forest text-sand",
+  paper: "light glass-tile text-ink",
+  ink: "glass-tile-ink text-sand",
+} as const
+
+const lifts = {
+  sand: "glass-lift",
+  forest: "glass-lift-dark",
+  paper: "glass-lift",
+  ink: "glass-lift-dark",
 } as const
 
 export type BentoTone = keyof typeof tones
 
 interface BentoTileProps {
   tone?: BentoTone
+  /** Añade elevación al hover: reservalo para baldosas que llevan a una acción */
+  interactive?: boolean
   className?: string
   children: ReactNode
   as?: ElementType
@@ -20,7 +34,8 @@ interface BentoTileProps {
 }
 
 export function BentoTile({
-  tone = "sand",
+  tone = "paper",
+  interactive = false,
   className,
   children,
   as: Comp = "div",
@@ -32,8 +47,9 @@ export function BentoTile({
       id={id}
       aria-labelledby={ariaLabelledby}
       className={clsx(
-        "relative overflow-hidden rounded-[1.75rem] p-5 sm:rounded-[2rem] sm:p-7",
+        "relative overflow-hidden rounded-tile p-5 sm:rounded-tile-lg sm:p-7",
         tones[tone],
+        interactive && lifts[tone],
         className
       )}
     >

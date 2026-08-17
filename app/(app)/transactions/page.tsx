@@ -4,6 +4,8 @@ import { TransactionQuickForm } from "@/components/transaction-quick-form"
 import { CategoryIcon } from "@/components/category-icon"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { EditTransactionDialog } from "@/components/edit-transaction-dialog"
+import { Subheading } from "@/components/ui/heading"
+import { Notice } from "@/components/ui/notice"
 import { WalletAppMonthSelect } from "@/components/wallet-app-month-select"
 import { monthLabel } from "@/lib/dates/month"
 import { formatDateEsSV } from "@/lib/dates/el-salvador"
@@ -113,9 +115,9 @@ export default async function TransactionsPage() {
       <TransactionQuickForm categories={categories} monthStart={start} monthEnd={end} />
 
       <BentoTile tone="paper" as="section" aria-labelledby="tx-list-heading">
-        <h2 id="tx-list-heading" className="font-display text-2xl uppercase tracking-tight text-ink">
+        <Subheading id="tx-list-heading" level={2}>
           Historial
-        </h2>
+        </Subheading>
         {rows.length === 0 ? (
           <p className="mt-4 text-sm text-ink/70">
             No hay movimientos en {monthLabel(monthStart)}.
@@ -123,43 +125,46 @@ export default async function TransactionsPage() {
         ) : (
           <div className="mt-4 flex flex-col gap-6">
             {isTruncated ? (
-              <p className="text-sm text-ink/70">
+              <Notice tone="info">
                 Mostrando los {rows.length} más recientes de {totalCount} en este mes.
-              </p>
+              </Notice>
             ) : null}
             {groups.map((group) => (
               <div key={group.key}>
                 <div className="flex items-center gap-2">
                   {group.icon ? (
                     <span
-                      className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-zinc-100 dark:bg-zinc-800"
+                      className="glass-chip flex size-7 shrink-0 items-center justify-center rounded-lg"
                       style={{ color: group.color ?? undefined }}
                     >
                       <CategoryIcon name={group.icon} className="size-4" />
                     </span>
                   ) : (
-                    <span className="size-7 shrink-0 rounded-lg bg-zinc-100 dark:bg-zinc-800" />
+                    <span className="size-7 shrink-0 rounded-lg bg-ink/12" />
                   )}
-                  <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+                  <h3 className="text-sm font-semibold uppercase tracking-wide text-ink">
                     {group.name}
                   </h3>
-                  <span className="text-xs tabular-nums text-zinc-500 dark:text-zinc-400">
+                  <span className="rounded-full bg-ink/12 px-2 py-0.5 text-xs tabular-nums text-ink/75">
                     {group.items.length}
                   </span>
                 </div>
-                <ul className="mt-2 divide-y divide-zinc-100 dark:divide-zinc-800">
+                <ul className="mt-2 divide-y divide-ink/12">
                   {group.items.map((t) => {
                     const isIncome = t.kind === "income"
                     return (
-                      <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                      <li
+                        key={t.id}
+                        className="glass-interactive -mx-2 flex items-center gap-3 rounded-xl px-2 py-3 hover:bg-forest/6"
+                      >
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                          <p className="text-xs text-ink/75">
                             {formatDateEsSV(t.occurred_at)}
                             {t.note ? ` · ${t.note}` : ""}
                           </p>
                         </div>
                         <span
-                          className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-600 dark:text-emerald-400" : "text-orange-600 dark:text-orange-400"}`}
+                          className={`shrink-0 text-sm font-semibold tabular-nums ${isIncome ? "text-emerald-700" : "text-ink"}`}
                         >
                           {isIncome ? "+" : "-"}
                           {formatMoney(Number(t.amount))}

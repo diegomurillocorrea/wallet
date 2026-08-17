@@ -149,7 +149,7 @@ const RegisterBudgetPaymentFormInner = ({
             <>
               <p
                 data-slot="control"
-                className="text-lg font-semibold tabular-nums text-zinc-950 dark:text-white"
+                className="glass-inset-dark rounded-xl px-3.5 py-2.5 font-display text-xl uppercase tracking-tight tabular-nums text-sand"
               >
                 {formatMoney(defaultAmount)}
               </p>
@@ -258,12 +258,10 @@ export const RegisterBudgetPaymentDialog = ({
         <BanknotesIcon />
       </Button>
       <Dialog open={open} onClose={handleCloseDialog} size="md">
-        <p className="text-xs font-medium uppercase tracking-wide text-zinc-500 dark:text-zinc-400">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-sand/60">
           Registrar gasto
         </p>
-        <DialogTitle className="mt-1 text-2xl/8 font-semibold sm:text-xl/8">
-          {categoryName}
-        </DialogTitle>
+        <DialogTitle className="mt-1">{categoryName}</DialogTitle>
         <DialogBody>
           <RegisterBudgetPaymentFormInner
             key={formNonce}

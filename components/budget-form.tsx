@@ -9,6 +9,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Description, ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { Select } from "@/components/ui/select"
 import { Subheading } from "@/components/ui/heading"
 import { Text, TextLink } from "@/components/ui/text"
@@ -78,7 +79,7 @@ export const BudgetForm = ({
       </Subheading>
       {isEdit ? (
         <Text>
-          Estás editando <span className="font-medium text-zinc-700 dark:text-zinc-300">{editTarget.categoryName}</span>.
+          Estás editando <span className="font-semibold text-ink">{editTarget.categoryName}</span>.
           El límite se guarda para el mes en contexto; el día de pago y la tarjeta son de la definición del presupuesto.
         </Text>
       ) : (
@@ -109,10 +110,10 @@ export const BudgetForm = ({
           name="amountLimit"
           type="number"
           inputMode="decimal"
-            min="0.01"
-            step="0.01"
-            required
-            defaultValue={isEdit ? editTarget.limit : undefined}
+          min="0.01"
+          step="0.01"
+          required
+          defaultValue={isEdit ? editTarget.limit : undefined}
         />
       </Field>
       <Field>
@@ -156,9 +157,7 @@ export const BudgetForm = ({
       </Field>
       {state?.error ? <ErrorMessage>{state.error}</ErrorMessage> : null}
       {state?.success ? (
-        <p className="text-sm text-emerald-600 dark:text-emerald-400" role="status">
-          {isEdit ? "Cambios guardados." : "Presupuesto guardado."}
-        </p>
+        <Notice tone="success">{isEdit ? "Cambios guardados." : "Presupuesto guardado."}</Notice>
       ) : null}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
         <Button

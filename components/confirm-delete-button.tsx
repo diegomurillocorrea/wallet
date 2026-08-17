@@ -9,6 +9,7 @@ import {
   AlertTitle,
 } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
+import { Notice } from "@/components/ui/notice"
 
 interface ConfirmDeleteButtonProps {
   label: string
@@ -58,9 +59,9 @@ export const ConfirmDeleteButton = ({
         <AlertTitle>{title}</AlertTitle>
         <AlertDescription>{description}</AlertDescription>
         {error ? (
-          <p className="mt-3 text-sm text-red-600 dark:text-red-500" role="alert">
+          <Notice tone="danger" className="mt-3">
             {error}
-          </p>
+          </Notice>
         ) : null}
         <AlertActions>
           <Button plain type="button" onClick={handleClose} disabled={pending}>

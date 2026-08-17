@@ -11,7 +11,6 @@ import {
 import { usePathname } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
 import { WallyMark } from "@/components/wally-mark"
-import { ThemeToggle } from "@/components/theme-toggle"
 import {
   Dropdown,
   DropdownButton,
@@ -63,7 +62,7 @@ export const AppShell = ({ children, email }: AppShellProps) => {
 
   const brand = (
     <NavbarItem href="/dashboard" aria-label="Wally — ir al resumen">
-      <WallyMark className="size-8 shrink-0" />
+      <WallyMark className="size-8 shrink-0" variant="butter" />
       <NavbarLabel className="font-display text-lg uppercase tracking-tight">Wally</NavbarLabel>
     </NavbarItem>
   )
@@ -89,7 +88,6 @@ export const AppShell = ({ children, email }: AppShellProps) => {
           </NavbarSection>
           <NavbarSpacer />
           <NavbarSection>
-            <ThemeToggle />
             <Dropdown>
               <DropdownButton as={NavbarItem} aria-label="Cuenta">
                 <NavbarLabel className="max-sm:hidden">
@@ -111,7 +109,7 @@ export const AppShell = ({ children, email }: AppShellProps) => {
           <SidebarHeader>
             <SidebarSection>
               <SidebarItem href="/dashboard" aria-label="Wally — ir al resumen">
-                <WallyMark className="size-7 shrink-0" />
+                <WallyMark className="size-7 shrink-0" variant="butter" />
                 <SidebarLabel className="font-display uppercase tracking-tight">Wally</SidebarLabel>
               </SidebarItem>
             </SidebarSection>

@@ -24,9 +24,9 @@ export function Table({
   return (
     <TableContext.Provider value={{ bleed, dense, grid, striped } as React.ContextType<typeof TableContext>}>
       <div className="flow-root">
-        <div {...props} className={clsx(className, '-mx-(--gutter) overflow-x-auto whitespace-nowrap')}>
+        <div {...props} className={clsx(className, 'glass-scroll -mx-(--gutter) overflow-x-auto whitespace-nowrap')}>
           <div className={clsx('inline-block min-w-full align-middle', !bleed && 'sm:px-(--gutter)')}>
-            <table className="min-w-full text-left text-sm/6 text-zinc-950 dark:text-white">{children}</table>
+            <table className="min-w-full text-left text-sm/6 text-zinc-950 dark:text-sand">{children}</table>
           </div>
         </div>
       </div>
@@ -35,7 +35,15 @@ export function Table({
 }
 
 export function TableHead({ className, ...props }: React.ComponentPropsWithoutRef<'thead'>) {
-  return <thead {...props} className={clsx(className, 'text-zinc-500 dark:text-zinc-400')} />
+  return (
+    <thead
+      {...props}
+      className={clsx(
+        className,
+        'text-xs/6 font-medium uppercase tracking-[0.14em] text-zinc-600 dark:text-sand/60'
+      )}
+    />
+  )
 }
 
 export function TableBody(props: React.ComponentPropsWithoutRef<'tbody'>) {
@@ -63,11 +71,12 @@ export function TableRow({
         {...props}
         className={clsx(
           className,
+          'transition-colors duration-150 ease-glass',
           href &&
-            'has-[[data-row-link][data-focus]]:outline-2 has-[[data-row-link][data-focus]]:-outline-offset-2 has-[[data-row-link][data-focus]]:outline-forest dark:has-[[data-row-link][data-focus]]:outline-butter dark:focus-within:bg-white/2.5',
-          striped && 'even:bg-zinc-950/2.5 dark:even:bg-white/2.5',
-          href && striped && 'hover:bg-zinc-950/5 dark:hover:bg-white/5',
-          href && !striped && 'hover:bg-zinc-950/2.5 dark:hover:bg-white/2.5'
+            'has-[[data-row-link][data-focus]]:outline-2 has-[[data-row-link][data-focus]]:-outline-offset-2 has-[[data-row-link][data-focus]]:outline-forest dark:has-[[data-row-link][data-focus]]:outline-butter dark:focus-within:bg-butter/5',
+          striped && 'even:bg-zinc-950/3 dark:even:bg-butter/4',
+          href && striped && 'hover:bg-zinc-950/6 dark:hover:bg-butter/8',
+          href && !striped && 'hover:bg-zinc-950/4 dark:hover:bg-butter/6'
         )}
       />
     </TableRowContext.Provider>
@@ -82,8 +91,8 @@ export function TableHeader({ className, ...props }: React.ComponentPropsWithout
       {...props}
       className={clsx(
         className,
-        'border-b border-b-zinc-950/10 px-4 py-2 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2)) dark:border-b-white/10',
-        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5',
+        'border-b border-b-zinc-950/10 px-4 py-2.5 font-medium first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2)) dark:border-b-butter/15',
+        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-butter/8',
         !bleed && 'sm:first:pl-1 sm:last:pr-1'
       )}
     />
@@ -102,8 +111,8 @@ export function TableCell({ className, children, ...props }: React.ComponentProp
       className={clsx(
         className,
         'relative px-4 first:pl-(--gutter,--spacing(2)) last:pr-(--gutter,--spacing(2))',
-        !striped && 'border-b border-zinc-950/5 dark:border-white/5',
-        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-white/5',
+        !striped && 'border-b border-zinc-950/6 dark:border-butter/8',
+        grid && 'border-l border-l-zinc-950/5 first:border-l-0 dark:border-l-butter/8',
         dense ? 'py-2.5' : 'py-4',
         !bleed && 'sm:first:pl-1 sm:last:pr-1'
       )}

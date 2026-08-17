@@ -47,46 +47,53 @@ export const BudgetMonthDisclosure = ({
     <Disclosure as="div" className="py-1">
       <div className="flex items-start gap-3">
         <DisclosureButton
-          className="group flex min-w-0 flex-1 items-start gap-3 rounded-xl text-left focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-forest dark:data-focus:outline-butter"
+          className="group flex min-w-0 flex-1 items-start gap-3 rounded-2xl text-left focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-forest dark:data-focus:outline-butter"
           aria-label={`Ver movimientos de ${budget.categoryName}, ${formatMoney(budget.spent)} de ${formatMoney(budget.limit)}`}
         >
           <span
-            className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-zinc-100 dark:bg-zinc-800"
+            className="glass-chip flex size-10 shrink-0 items-center justify-center rounded-xl"
             style={{ color: budget.color }}
           >
             <CategoryIcon name={budget.icon} className="size-5" />
           </span>
           <div className="min-w-0 flex-1 pt-0.5">
             <div className="flex items-center gap-1">
-              <span className="truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">
+              <span className="truncate text-sm font-semibold text-ink">
                 {budget.categoryName}
               </span>
-              <ChevronDownIcon className="size-4 shrink-0 text-zinc-500 transition duration-200 group-data-open:rotate-180 dark:text-zinc-400" />
+              <ChevronDownIcon className="size-4 shrink-0 text-ink/60 transition-transform duration-200 ease-glass group-data-open:rotate-180" />
             </div>
-            <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="mt-0.5 truncate text-xs text-ink/70">
               Día de pago <span className="tabular-nums">{dayLabel}</span>
               {budget.card ? (
                 <>
-                  <span className="text-zinc-300 dark:text-zinc-600"> · </span>
+                  <span className="text-ink/25"> · </span>
                   <span className="tabular-nums">•••• {budget.card.last4}</span>
                   <span> {budget.card.holderShort}</span>
                 </>
               ) : null}
             </p>
-            <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-zinc-100 dark:bg-zinc-800">
+            <div
+              className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-ink/12 shadow-[inset_0_1px_1px_rgb(0_20_17/0.1)]"
+              role="progressbar"
+              aria-valuenow={Math.min(100, Math.round(budget.ratio * 100))}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Avance de ${budget.categoryName}`}
+            >
               <div
-                className={`h-full rounded-full ${fillClass}`}
+                className={`h-full rounded-full transition-[width] duration-300 ease-glass ${fillClass}`}
                 style={{ width: `${Math.min(100, budget.ratio * 100)}%` }}
               />
             </div>
             {status ? (
               <p
-                className={`mt-1 text-[11px] font-medium ${
+                className={`mt-1.5 text-[11px] font-semibold uppercase tracking-wide ${
                   budget.level === "over" && budget.spent !== budget.limit
-                    ? "text-red-600 dark:text-red-400"
+                    ? "text-red-700"
                     : budget.level === "warn"
-                      ? "text-amber-700 dark:text-amber-400"
-                      : "text-emerald-700 dark:text-emerald-400"
+                      ? "text-amber-700"
+                      : "text-emerald-700"
                 }`}
               >
                 {status}
@@ -95,35 +102,39 @@ export const BudgetMonthDisclosure = ({
           </div>
         </DisclosureButton>
         <div className="flex shrink-0 items-center gap-0.5 pt-0.5">
-          <span className="mr-1 text-sm tabular-nums text-zinc-600 dark:text-zinc-300">
+          <span className="mr-1 text-sm font-medium tabular-nums text-ink">
             {formatMoney(budget.spent)}
-            <span className="text-zinc-500 dark:text-zinc-400"> / {formatMoney(budget.limit)}</span>
+            <span className="font-normal text-ink/70"> / {formatMoney(budget.limit)}</span>
           </span>
           {actions}
         </div>
       </div>
 
-      <DisclosurePanel className="mt-3 border-t border-zinc-100 pt-2 dark:border-zinc-800">
+      <DisclosurePanel
+        transition
+        className="mt-3 origin-top border-t border-ink/12 pt-2 transition duration-200 ease-glass data-closed:-translate-y-1 data-closed:opacity-0"
+      >
         {budget.movements.length === 0 ? (
           <div className="flex items-center gap-3 py-2">
             <span className="size-10 shrink-0" aria-hidden="true" />
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Sin movimientos este mes.</p>
+            <p className="text-xs text-ink/70">Sin movimientos este mes.</p>
           </div>
         ) : (
           <ul>
             {budget.movements.map((movement) => (
-              <li key={movement.id} className="flex items-center gap-3 py-2">
+              <li
+                key={movement.id}
+                className="glass-interactive -mx-2 flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-forest/6"
+              >
                 <span className="size-10 shrink-0" aria-hidden="true" />
                 <div className="min-w-0 flex-1">
-                  <p className="text-sm text-zinc-800 dark:text-zinc-200">
-                    {formatDateEsSV(movement.occurredAt)}
-                  </p>
+                  <p className="text-sm text-ink/85">{formatDateEsSV(movement.occurredAt)}</p>
                   {movement.note ? (
-                    <p className="truncate text-xs text-zinc-500 dark:text-zinc-400">{movement.note}</p>
+                    <p className="truncate text-xs text-ink/70">{movement.note}</p>
                   ) : null}
                 </div>
                 <div className="flex shrink-0 items-center gap-0.5">
-                  <span className="mr-1 text-sm tabular-nums text-zinc-700 dark:text-zinc-200">
+                  <span className="mr-1 text-sm tabular-nums text-ink/85">
                     {formatMoney(movement.amount)}
                   </span>
                   <EditTransactionDialog

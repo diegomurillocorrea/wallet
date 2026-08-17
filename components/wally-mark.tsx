@@ -1,21 +1,32 @@
+import Image from "next/image"
+import clsx from "clsx"
+
+const MARK_SRC = {
+  butter: "/04_icon_butter_transparent.png",
+  forest: "/03_icon_forest_transparent.png",
+} as const
+
 interface WallyMarkProps {
   className?: string
+  /** `butter` sobre verde o negro; `forest` sobre arena o blanco */
+  variant?: keyof typeof MARK_SRC
+  priority?: boolean
 }
 
-/** Marca geométrica: círculo + W. Color vía `currentColor`. */
-export function WallyMark({ className = "size-10" }: WallyMarkProps) {
+export function WallyMark({
+  className = "size-10",
+  variant = "butter",
+  priority = false,
+}: WallyMarkProps) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      className={className}
-      aria-hidden="true"
-      focusable="false"
-    >
-      <circle cx="16" cy="16" r="15" fill="currentColor" />
-      <path
-        d="M8.2 10.2h3.05l1.72 8.05 2.08-6.35h1.9l2.08 6.35 1.72-8.05H23.8L20.4 21.8h-2.2L16 15.4l-2.2 6.4h-2.2L8.2 10.2Z"
-        fill="var(--wally-counter, #ffefb3)"
-      />
-    </svg>
+    <Image
+      src={MARK_SRC[variant]}
+      alt=""
+      width={64}
+      height={64}
+      priority={priority}
+      className={clsx("object-contain", className)}
+      aria-hidden
+    />
   )
 }

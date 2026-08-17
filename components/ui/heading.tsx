@@ -10,18 +10,20 @@ export function Heading({ className, level = 1, ...props }: HeadingProps) {
   return (
     <Element
       {...props}
-      className={clsx(className, 'font-display text-3xl uppercase leading-[0.9] tracking-tight text-ink sm:text-4xl')}
+      className={clsx(className, 'font-display text-3xl uppercase leading-[0.9] tracking-tight text-current sm:text-4xl')}
     />
   )
 }
 
+/* Título de panel: el mismo tamaño en toda la app para que las columnas de una
+   misma rejilla no compitan entre sí. */
 export function Subheading({ className, level = 2, ...props }: HeadingProps) {
   const Element: `h${typeof level}` = `h${level}`
 
   return (
     <Element
       {...props}
-      className={clsx(className, 'font-display text-lg uppercase tracking-tight text-ink sm:text-base')}
+      className={clsx(className, 'font-display text-xl uppercase tracking-tight text-current sm:text-2xl')}
     />
   )
 }

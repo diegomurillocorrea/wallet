@@ -7,11 +7,11 @@ import { createClient } from "@/lib/supabase/client"
 import { Footer } from "@/components/footer"
 import { WallyMark } from "@/components/wally-mark"
 import { GoogleAuthButton } from "@/components/google-auth-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { Button } from "@/components/ui/button"
 import { Checkbox, CheckboxField } from "@/components/ui/checkbox"
 import { ErrorMessage, Field, Label } from "@/components/ui/fieldset"
 import { Input } from "@/components/ui/input"
+import { Notice } from "@/components/ui/notice"
 import { TextLink } from "@/components/ui/text"
 
 export default function SignupPage() {
@@ -55,19 +55,16 @@ export default function SignupPage() {
   const displayStatus = isSuccessMessage ? message : null
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-ink">
-      <div className="absolute right-4 top-4 z-10 text-sand">
-        <ThemeToggle />
-      </div>
+    <div className="relative flex min-h-screen flex-col">
       <div className="relative z-10 flex flex-1 flex-col justify-center p-3">
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-          className="mx-auto grid w-full max-w-5xl gap-3 lg:grid-cols-12 lg:min-h-[34rem]"
+          className="mx-auto grid w-full gap-3 lg:grid-cols-12 lg:min-h-[34rem]"
         >
-          <div className="relative min-h-[14rem] overflow-hidden rounded-[1.75rem] bg-forest text-sand [--wally-counter:var(--color-forest)] sm:rounded-[2rem] lg:col-span-5">
-            <WallyMark className="absolute top-6 left-6 size-12 text-sand" />
+          <div className="light glass-tile-sand relative min-h-[14rem] overflow-hidden rounded-tile text-ink sm:rounded-tile-lg lg:col-span-5">
+            <WallyMark className="absolute top-6 left-6 size-12" variant="forest" priority />
             <p className="sr-only">Wally</p>
             <p
               aria-hidden
@@ -81,7 +78,7 @@ export default function SignupPage() {
             <h1 className="font-display text-4xl uppercase tracking-tight text-ink">
               Crear cuenta
             </h1>
-            <p className="mt-2 text-sm uppercase tracking-wide text-ink/60">
+            <p className="mt-2 text-sm uppercase tracking-wide text-ink/70">
               Google crea tu cuenta al instante; el correo es opcional.
             </p>
           </div>
@@ -96,11 +93,11 @@ export default function SignupPage() {
               }}
             />
             <div className="flex items-center gap-3" role="separator" aria-label="O registrarse con correo">
-              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
-              <span className="text-xs font-medium uppercase tracking-[0.2em] text-zinc-500 dark:text-zinc-400">
+              <span className="h-px flex-1 bg-ink/12" />
+              <span className="text-xs font-medium uppercase tracking-[0.2em] text-ink/70">
                 o correo
               </span>
-              <span className="h-px flex-1 bg-zinc-200 dark:bg-zinc-700" />
+              <span className="h-px flex-1 bg-ink/12" />
             </div>
           </div>
 
@@ -151,14 +148,7 @@ export default function SignupPage() {
 
             {displayAlert ? <ErrorMessage>{displayAlert}</ErrorMessage> : null}
 
-            {displayStatus ? (
-              <div
-                role="status"
-                className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
-              >
-                {displayStatus}
-              </div>
-            ) : null}
+            {displayStatus ? <Notice tone="success">{displayStatus}</Notice> : null}
 
             <Button
               type="submit"
@@ -172,7 +162,7 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-ink/60">
+          <p className="mt-6 text-center text-sm text-ink/70">
             ¿Ya tenés cuenta?{" "}
             <TextLink href="/login">Iniciar sesión</TextLink>
           </p>

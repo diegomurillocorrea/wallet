@@ -5,6 +5,7 @@ import { EditCategoryDialog } from "@/components/edit-category-dialog"
 import { PageHeader } from "@/components/page-header"
 import { BentoTile } from "@/components/bento-tile"
 import { Badge } from "@/components/ui/badge"
+import { Subheading } from "@/components/ui/heading"
 import { createClient } from "@/lib/supabase/server"
 import type { CategoryRow } from "@/lib/types/wallet"
 
@@ -34,25 +35,23 @@ export default async function CategoriesPage() {
         <AddCategoryForm />
 
         <BentoTile tone="paper" as="section" aria-labelledby="cat-list-heading">
-          <h2 id="cat-list-heading" className="font-display text-2xl uppercase tracking-tight text-ink">
+          <Subheading id="cat-list-heading" level={2}>
             Tus categorías
-          </h2>
+          </Subheading>
           <ul className="mt-4 flex flex-col gap-2">
             {categories.map((c) => (
               <li
                 key={c.id}
-                className="flex items-center gap-3 rounded-2xl bg-sand/70 px-3 py-3"
+                className="glass-inset glass-interactive flex items-center gap-3 rounded-2xl px-3 py-3 hover:bg-forest/8"
               >
                 <span
-                  className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-zinc-900"
+                  className="glass-chip flex size-10 shrink-0 items-center justify-center rounded-xl"
                   style={{ color: c.color }}
                 >
                   <CategoryIcon name={c.icon} className="size-5" />
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-zinc-900 dark:text-zinc-100">
-                    {c.name}
-                  </p>
+                  <p className="truncate text-sm font-medium text-ink">{c.name}</p>
                   <Badge color={c.kind === "income" ? "emerald" : "zinc"} className="mt-1">
                     {c.kind === "income" ? "Ingreso" : "Gasto"}
                   </Badge>

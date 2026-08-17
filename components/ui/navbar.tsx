@@ -2,7 +2,7 @@
 
 import * as Headless from '@headlessui/react'
 import clsx from 'clsx'
-import { LayoutGroup, motion } from 'motion/react'
+import { LayoutGroup, motion } from 'framer-motion'
 import React, { forwardRef, useId } from 'react'
 import { TouchTarget } from './button'
 import { Link } from './link'
@@ -12,7 +12,7 @@ export function Navbar({ className, ...props }: React.ComponentPropsWithoutRef<'
 }
 
 export function NavbarDivider({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  return <div aria-hidden="true" {...props} className={clsx(className, 'h-6 w-px bg-zinc-950/10 dark:bg-white/10')} />
+  return <div aria-hidden="true" {...props} className={clsx(className, 'h-6 w-px bg-current/15')} />
 }
 
 export function NavbarSection({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
@@ -43,12 +43,14 @@ export const NavbarItem = forwardRef(function NavbarItem(
 ) {
   const classes = clsx(
     // Base
-    'relative flex min-w-0 items-center gap-3 rounded-lg p-2 text-left text-base/6 font-medium text-current sm:text-sm/5',
+    'relative flex min-w-0 items-center gap-3 rounded-full px-3 py-2 text-left text-base/6 font-medium text-current sm:text-sm/5',
+    'transition-colors duration-200 ease-glass',
     '*:data-[slot=icon]:size-6 *:data-[slot=icon]:shrink-0 *:data-[slot=icon]:fill-current sm:*:data-[slot=icon]:size-5',
     '*:not-nth-2:last:data-[slot=icon]:ml-auto *:not-nth-2:last:data-[slot=icon]:size-5 sm:*:not-nth-2:last:data-[slot=icon]:size-4',
     '*:data-[slot=avatar]:-m-0.5 *:data-[slot=avatar]:size-7 *:data-[slot=avatar]:[--avatar-radius:var(--radius-md)] sm:*:data-[slot=avatar]:size-6',
-    'data-hover:bg-current/10',
-    'data-active:bg-current/10',
+    'data-hover:bg-current/8',
+    'data-active:bg-current/12',
+    'focus:not-data-focus:outline-hidden data-focus:outline-2 data-focus:outline-offset-2 data-focus:outline-butter'
   )
 
   return (
@@ -56,7 +58,8 @@ export const NavbarItem = forwardRef(function NavbarItem(
       {current && (
         <motion.span
           layoutId="current-indicator"
-          className="absolute inset-x-2 -bottom-2.5 h-0.5 rounded-full bg-current"
+          transition={{ type: 'spring', stiffness: 520, damping: 42, mass: 0.7 }}
+          className="glass-inset-dark absolute inset-0 rounded-full"
         />
       )}
       {typeof props.href === 'string' ? (

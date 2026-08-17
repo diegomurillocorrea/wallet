@@ -1,18 +1,74 @@
 @import "tailwindcss";
 
-@variant dark (&:where(.dark, .dark *)) {
+@variant dark (&:where(.dark, .dark *):not(:where(.light, .light *, .bento-panel, .bento-panel *))) {
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
+
+  /* Marca */
   --butter: #ffefb3;
   --forest: #013e37;
   --sand: #ffefb3;
   --ink: #000000;
   --paper: #ffffff;
-  --background: #000000;
+  --background: #013e37;
   --foreground: #ffefb3;
-  --wally-mark-fg: #ffefb3;
+
+  /* Liquid Glass · desenfoque y saturación */
+  --glass-blur-sm: 10px;
+  --glass-blur-md: 16px;
+  --glass-blur-lg: 26px;
+  --glass-saturation: 150%;
+
+  /*
+    Liquid Glass · vidrio claro (papel sobre bosque)
+
+    Vidrio, no papel: la base es un blanco cálido a poco más de dos tercios de
+    opacidad, así el bosque tiñe el panel y se percibe la profundidad. El tono
+    cálido evita que la mezcla con el verde vire a gris sucio.
+  */
+  --glass-paper: rgb(255 252 244 / 0.7);
+  --glass-paper-hover: rgb(255 253 248 / 0.78);
+  --glass-paper-border: rgb(255 255 255 / 0.45);
+  --glass-paper-sheen: linear-gradient(180deg, rgb(255 255 255 / 0.3), rgb(255 255 255 / 0) 40%);
+
+  /* Superficie de control dentro del vidrio claro (inputs, chips de ícono) */
+  --glass-chip: rgb(255 255 255 / 0.5);
+  --glass-chip-border: rgb(255 255 255 / 0.6);
+  --glass-field: rgb(255 255 255 / 0.62);
+
+  /*
+    Liquid Glass · vidrio arena. Menos transparente que el papel a propósito:
+    el mantequilla es color de marca y por debajo de ~0.85 el verde lo arrastra
+    a caqui.
+  */
+  --glass-sand: rgb(255 239 179 / 0.88);
+  --glass-sand-border: rgb(255 255 255 / 0.45);
+
+  /* Liquid Glass · vidrio bosque */
+  --glass-forest: rgb(2 66 58 / 0.6);
+  --glass-forest-hover: rgb(3 82 72 / 0.7);
+  --glass-forest-border: rgb(255 239 179 / 0.18);
+  --glass-forest-sheen: linear-gradient(180deg, rgb(255 239 179 / 0.1), rgb(255 239 179 / 0) 55%);
+
+  /* Liquid Glass · vidrio tinta */
+  --glass-ink: rgb(0 14 12 / 0.55);
+  --glass-ink-border: rgb(255 239 179 / 0.16);
+
+  /* Reflejos internos */
+  --glass-highlight-light: inset 0 1px 0 rgb(255 255 255 / 0.55);
+  --glass-highlight-dark: inset 0 1px 0 rgb(255 239 179 / 0.16);
+
+  /* Sombras: flotación, nunca peso */
+  --glass-shadow-sm: 0 1px 2px rgb(0 20 17 / 0.16), 0 6px 16px -10px rgb(0 20 17 / 0.4);
+  --glass-shadow-md: 0 1px 2px rgb(0 20 17 / 0.14), 0 16px 36px -20px rgb(0 20 17 / 0.55);
+  --glass-shadow-lg: 0 2px 6px rgb(0 20 17 / 0.18), 0 30px 66px -26px rgb(0 20 17 / 0.7);
+
+  /* Movimiento */
+  --glass-duration-fast: 140ms;
+  --glass-duration: 200ms;
+  --glass-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme {
@@ -55,6 +111,15 @@
   --color-orange-800: #5c450c;
   --color-orange-900: #3d2e08;
   --color-orange-950: #241c04;
+
+  --radius-tile: 1.75rem;
+  --radius-tile-lg: 2rem;
+
+  --blur-glass-sm: 10px;
+  --blur-glass-md: 16px;
+  --blur-glass-lg: 26px;
+
+  --ease-glass: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -65,14 +130,10 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
-html.dark,
-html.light {
-  --background: #000000;
+html {
+  --background: #013e37;
   --foreground: #ffefb3;
-}
-
-html.light {
-  --wally-mark-fg: #013e37;
+  background-color: var(--forest);
 }
 
 * {
@@ -80,20 +141,295 @@ html.light {
 }
 
 body {
-  background: var(--ink);
+  isolation: isolate;
+  background-color: var(--forest);
   color: var(--sand);
   font-family: var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
   font-feature-settings: "rlig" 1, "calt" 1;
+}
+
+::selection {
+  background-color: rgb(255 239 179 / 0.28);
+  color: var(--sand);
+}
+
+.light ::selection,
+.bento-panel ::selection {
+  background-color: rgb(1 62 55 / 0.16);
+  color: var(--ink);
+}
+
+/*
+  Luz ambiental fija detrás de todo el contenido: da al vidrio algo que
+  refractar sin introducir repintado durante el scroll.
+*/
+.app-ambient {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(115% 75% at 8% -12%, rgb(2 100 88 / 0.55), transparent 58%),
+    radial-gradient(85% 65% at 92% 2%, rgb(255 239 179 / 0.11), transparent 55%),
+    radial-gradient(95% 85% at 78% 106%, rgb(2 92 82 / 0.42), transparent 60%),
+    linear-gradient(180deg, rgb(1 62 55 / 0), rgb(0 26 22 / 0.45));
 }
 
 .font-display {
   font-family: var(--font-display), var(--font-poppins), ui-sans-serif, system-ui, sans-serif;
 }
 
+/* ---------------------------------------------------------------------------
+   Superficies Liquid Glass
+
+   Cada utilidad define solo el material (fondo, borde, reflejo, sombra,
+   desenfoque). El radio, el padding y el layout se componen con clases
+   Tailwind en cada componente.
+
+   Jerarquía: bar → tile → floating → modal, con desenfoque y sombra crecientes.
+--------------------------------------------------------------------------- */
+
+@utility glass-bar {
+  background-color: var(--glass-forest);
+  background-image: var(--glass-forest-sheen);
+  border: 1px solid var(--glass-forest-border);
+  box-shadow: var(--glass-shadow-md), var(--glass-highlight-dark);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturation));
+}
+
+/*
+  Con las baldosas translúcidas el desenfoque sí trabaja: es lo que convierte
+  el fondo que se transparenta en vidrio esmerilado en lugar de suciedad.
+*/
+@utility glass-tile {
+  background-color: var(--glass-paper);
+  background-image: var(--glass-paper-sheen);
+  border: 1px solid var(--glass-paper-border);
+  box-shadow: var(--glass-shadow-md), var(--glass-highlight-light);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturation));
+}
+
+@utility glass-tile-sand {
+  background-color: var(--glass-sand);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.24), rgb(255 255 255 / 0) 46%);
+  border: 1px solid var(--glass-sand-border);
+  box-shadow: var(--glass-shadow-md), inset 0 1px 0 rgb(255 255 255 / 0.45);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturation));
+}
+
+@utility glass-tile-forest {
+  background-color: var(--glass-forest);
+  background-image: var(--glass-forest-sheen);
+  border: 1px solid var(--glass-forest-border);
+  box-shadow: var(--glass-shadow-md), var(--glass-highlight-dark);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturation));
+}
+
+@utility glass-tile-ink {
+  background-color: var(--glass-ink);
+  background-image: linear-gradient(180deg, rgb(255 239 179 / 0.08), rgb(255 239 179 / 0) 50%);
+  border: 1px solid var(--glass-ink-border);
+  box-shadow: var(--glass-shadow-md), var(--glass-highlight-dark);
+  backdrop-filter: blur(var(--glass-blur-md)) saturate(var(--glass-saturation));
+}
+
+/*
+  Pastilla que sostiene un ícono o una cifra corta dentro del vidrio claro.
+  Translúcida en vez de blanca: se lee como un relieve del propio panel.
+*/
+@utility glass-chip {
+  background-color: var(--glass-chip);
+  border: 1px solid var(--glass-chip-border);
+  box-shadow: 0 1px 2px rgb(0 20 17 / 0.1);
+}
+
+/* Menús, popovers y controles flotantes */
+@utility glass-floating {
+  background-color: rgb(3 74 66 / 0.8);
+  background-image: linear-gradient(180deg, rgb(255 239 179 / 0.12), rgb(255 239 179 / 0) 60%);
+  border: 1px solid rgb(255 239 179 / 0.22);
+  box-shadow: var(--glass-shadow-lg), var(--glass-highlight-dark);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturation));
+}
+
+/* Diálogos: más opacos que los popovers porque contienen formularios */
+@utility glass-modal {
+  background-color: rgb(2 60 53 / 0.9);
+  background-image: linear-gradient(180deg, rgb(255 239 179 / 0.1), rgb(255 239 179 / 0) 45%);
+  border: 1px solid rgb(255 239 179 / 0.2);
+  box-shadow: var(--glass-shadow-lg), var(--glass-highlight-dark);
+  backdrop-filter: blur(var(--glass-blur-lg)) saturate(var(--glass-saturation));
+}
+
+@utility glass-overlay {
+  background-color: rgb(0 18 15 / 0.42);
+  backdrop-filter: blur(var(--glass-blur-sm)) saturate(120%);
+}
+
+/*
+  Superficies anidadas: heredan el desenfoque del contenedor en lugar de
+  aplicar el suyo, para no apilar capas de backdrop-filter.
+*/
+@utility glass-inset {
+  background-color: rgb(1 62 55 / 0.06);
+  border: 1px solid rgb(1 62 55 / 0.1);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.3);
+}
+
+@utility glass-inset-dark {
+  background-color: rgb(255 239 179 / 0.07);
+  border: 1px solid rgb(255 239 179 / 0.13);
+  box-shadow: inset 0 1px 0 rgb(255 239 179 / 0.08);
+}
+
+/* Microinteracción compartida por superficies que responden al puntero */
+@utility glass-interactive {
+  transition:
+    background-color var(--glass-duration) var(--glass-ease),
+    border-color var(--glass-duration) var(--glass-ease),
+    box-shadow var(--glass-duration) var(--glass-ease),
+    transform var(--glass-duration-fast) var(--glass-ease);
+}
+
+@utility glass-lift {
+  transition:
+    background-color var(--glass-duration) var(--glass-ease),
+    border-color var(--glass-duration) var(--glass-ease),
+    box-shadow var(--glass-duration) var(--glass-ease),
+    transform var(--glass-duration) var(--glass-ease);
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--glass-shadow-lg), var(--glass-highlight-light);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+@utility glass-lift-dark {
+  transition:
+    background-color var(--glass-duration) var(--glass-ease),
+    border-color var(--glass-duration) var(--glass-ease),
+    box-shadow var(--glass-duration) var(--glass-ease),
+    transform var(--glass-duration) var(--glass-ease);
+
+  &:hover {
+    transform: translateY(-2px);
+    background-color: var(--glass-forest-hover);
+    box-shadow: var(--glass-shadow-lg), var(--glass-highlight-dark);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+/* Panel de contenido estándar: vidrio claro con el padding del bento */
 .bento-panel {
-  @apply relative overflow-hidden rounded-[1.75rem] bg-paper p-5 text-ink sm:rounded-[2rem] sm:p-7;
+  @apply glass-tile relative overflow-hidden rounded-tile p-5 text-ink sm:rounded-tile-lg sm:p-7;
 }
 
 .focus-ring {
-  @apply outline-none ring-2 ring-forest/50 ring-offset-2 ring-offset-white dark:ring-offset-forest;
+  @apply outline-2 outline-offset-2 outline-forest;
+}
+
+.focus-ring-dark {
+  @apply outline-2 outline-offset-2 outline-butter;
+}
+
+/* Scrollbars discretas dentro de superficies de vidrio */
+.glass-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 239 179 / 0.28) transparent;
+}
+
+.light .glass-scroll,
+.bento-panel .glass-scroll {
+  scrollbar-color: rgb(1 62 55 / 0.25) transparent;
+}
+
+/* ---------------------------------------------------------------------------
+   Degradaciones elegantes
+--------------------------------------------------------------------------- */
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-tile {
+    background-color: rgb(255 255 255 / 0.97);
+  }
+
+  .glass-tile-sand {
+    background-color: rgb(255 239 179 / 0.97);
+  }
+
+  .glass-bar,
+  .glass-tile-forest {
+    background-color: rgb(2 66 58 / 0.95);
+  }
+
+  .glass-tile-ink {
+    background-color: rgb(0 14 12 / 0.95);
+  }
+
+  .glass-floating {
+    background-color: rgb(3 74 66 / 0.97);
+  }
+
+  .glass-modal {
+    background-color: rgb(2 60 53 / 0.99);
+  }
+
+  .glass-overlay {
+    background-color: rgb(0 18 15 / 0.72);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass-tile {
+    background-color: var(--paper);
+  }
+
+  .glass-tile-sand {
+    background-color: var(--sand);
+  }
+
+  .glass-bar,
+  .glass-tile-forest {
+    background-color: #024039;
+  }
+
+  .glass-tile-ink {
+    background-color: #000e0c;
+  }
+
+  .glass-floating {
+    background-color: #034a42;
+  }
+
+  .glass-modal {
+    background-color: #013c35;
+  }
+
+  .glass-overlay {
+    background-color: rgb(0 18 15 / 0.78);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .glass-lift:hover,
+  .glass-lift-dark:hover {
+    transform: none;
+  }
 }

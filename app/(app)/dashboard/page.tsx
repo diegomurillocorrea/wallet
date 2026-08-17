@@ -8,6 +8,7 @@ import { BudgetMonthDisclosure } from "@/components/budget-month-disclosure"
 import { RegisterBudgetPaymentDialog } from "@/components/register-budget-payment-dialog"
 import { DeleteTransactionButton } from "@/components/delete-transaction-button"
 import { TransactionQuickForm } from "@/components/transaction-quick-form"
+import { Subheading } from "@/components/ui/heading"
 import { monthLabel } from "@/lib/dates/month"
 import { formatDateEsSV } from "@/lib/dates/el-salvador"
 import { getWalletAppMonthRange } from "@/lib/dates/wallet-app-month"
@@ -139,7 +140,7 @@ export default async function DashboardPage() {
           as="section"
           className="flex min-h-[14rem] flex-col justify-between lg:col-span-8"
         >
-          <WallyMark className="size-11 text-sand" />
+          <WallyMark className="size-11" variant="butter" />
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sand/80">
               Gastos del mes
@@ -163,7 +164,7 @@ export default async function DashboardPage() {
             Wally
           </p>
           <div className="absolute right-6 bottom-6 text-right">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/60">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-ink/70">
               Balance
             </p>
             <p className="mt-1 font-display text-3xl uppercase leading-none tracking-tight tabular-nums sm:text-4xl">
@@ -178,38 +179,38 @@ export default async function DashboardPage() {
           aria-labelledby="recent-heading"
           className="flex min-h-[18rem] flex-col lg:col-span-8"
         >
-          <h2
-            id="recent-heading"
-            className="font-display text-2xl uppercase tracking-tight text-ink"
-          >
+          <Subheading id="recent-heading" level={2}>
             Movimientos
-          </h2>
+          </Subheading>
           {recent.length === 0 ? (
-            <p className="mt-6 text-sm uppercase tracking-wide text-ink/60">
+            <p className="mt-6 text-sm uppercase tracking-wide text-ink/70">
               No hay movimientos en {periodLabel}. Registrá un gasto o ingreso abajo.
             </p>
           ) : (
-            <ul className="mt-4 flex flex-1 flex-col justify-center divide-y divide-ink/10">
+            <ul className="mt-4 flex flex-1 flex-col justify-center divide-y divide-ink/12">
               {recent.map((t) => {
                 const cat = t.category
                 const isIncome = t.kind === "income"
                 return (
-                  <li key={t.id} className="flex items-center gap-3 py-3 first:pt-0 last:pb-0">
+                  <li
+                    key={t.id}
+                    className="glass-interactive -mx-2 flex items-center gap-3 rounded-2xl px-2 py-3 hover:bg-forest/6"
+                  >
                     {cat ? (
                       <span
-                        className="flex size-10 shrink-0 items-center justify-center rounded-full bg-sand text-ink"
+                        className="glass-chip flex size-10 shrink-0 items-center justify-center rounded-full"
                         style={{ color: cat.color }}
                       >
                         <CategoryIcon name={cat.icon} className="size-5" />
                       </span>
                     ) : (
-                      <span className="size-10 shrink-0 rounded-full bg-sand" />
+                      <span className="size-10 shrink-0 rounded-full bg-ink/12" />
                     )}
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold uppercase tracking-wide text-ink">
                         {cat?.name ?? "Sin categoría"}
                       </p>
-                      <p className="text-xs uppercase tracking-wide text-ink/55">
+                      <p className="text-xs uppercase tracking-wide text-ink/70">
                         {formatDateEsSV(t.occurred_at)}
                         {t.note ? ` · ${t.note}` : ""}
                       </p>
@@ -228,7 +229,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className="grid gap-3 lg:grid-cols-12">
-        <BentoTile tone="sand" className="lg:col-span-5">
+        <BentoTile tone="paper" className="lg:col-span-5">
           <TransactionQuickForm
             embedded
             categories={categories}
@@ -236,7 +237,7 @@ export default async function DashboardPage() {
             monthEnd={end}
           />
         </BentoTile>
-        <BentoTile tone="forest" className="flex min-h-[12rem] flex-col justify-between lg:col-span-3">
+        <BentoTile tone="ink" className="flex min-h-[12rem] flex-col justify-between lg:col-span-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-sand/80">
             Ingresos del mes
           </p>
@@ -250,12 +251,9 @@ export default async function DashboardPage() {
           aria-labelledby="chart-bars-heading"
           className="lg:col-span-4"
         >
-          <h2
-            id="chart-bars-heading"
-            className="font-display text-xl uppercase tracking-tight text-ink"
-          >
+          <Subheading id="chart-bars-heading" level={2}>
             Ingresos vs gastos
-          </h2>
+          </Subheading>
           <IncomeExpenseBars income={monthIncome} expense={monthExpense} />
         </BentoTile>
       </div>
@@ -266,13 +264,10 @@ export default async function DashboardPage() {
           as="section"
           aria-labelledby="budget-alerts-heading"
         >
-          <h2
-            id="budget-alerts-heading"
-            className="font-display text-2xl uppercase tracking-tight text-ink"
-          >
+          <Subheading id="budget-alerts-heading" level={2}>
             Presupuestos del mes
-          </h2>
-          <ul className="mt-4 divide-y divide-ink/10">
+          </Subheading>
+          <ul className="mt-4 divide-y divide-ink/12">
             {sortedAlerts.map((a) => (
               <li key={a.budgetId} className="py-3 first:pt-0 last:pb-0">
                 <BudgetMonthDisclosure
@@ -311,16 +306,13 @@ export default async function DashboardPage() {
       ) : null}
 
       <BentoTile
-        tone="sand"
+        tone="paper"
         as="section"
         aria-labelledby="chart-pie-heading"
       >
-        <h2
-          id="chart-pie-heading"
-          className="font-display text-2xl uppercase tracking-tight text-ink"
-        >
+        <Subheading id="chart-pie-heading" level={2}>
           Gastos por categoría
-        </h2>
+        </Subheading>
         <ExpenseByCategoryChart data={pieData} />
       </BentoTile>
     </div>
